@@ -1,0 +1,22 @@
+{
+  "name": "campus-control",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Campus Control — an ATC-style Rice campus logistics game",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "phaser": "^3.80.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
+    "vitest": "^1.6.0"
+  }
+}
