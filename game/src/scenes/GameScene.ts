@@ -755,6 +755,9 @@ export class GameScene extends Phaser.Scene {
   get remainingToSpawn() {
     return this.waveTotal - this.spawnedCount;
   }
+  get expectedOwls() {
+    return this.waveTotal;
+  }
   get isBrownout() {
     return this.brownout;
   }

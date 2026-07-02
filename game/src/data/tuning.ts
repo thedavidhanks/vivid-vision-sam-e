@@ -11,8 +11,8 @@ export const TUNING = {
 
   // ---- DEFAULT SPEEDS (px/sec) ---------------------------------------------
   speed: {
-    owl: 95, // professors (owl + grad cap)
-    owlet: 110, // students (owlet + backpack) — a touch quicker by default
+    owl: 80, // professors (owl + grad cap) — slower, more deliberate pace
+    owlet: 110, // students (owlet + backpack) — noticeably quicker than professors
     drone: 175, // repair-drone flight speed
   },
 
@@ -88,9 +88,9 @@ export const TUNING = {
   // ---- FX (feedback for spending power) ------------------------------------
   // Purely visual; sells "powering a building draws from the shared factory."
   fx: {
-    // Screen anchor the power bolt springs from — sits under the HUD power bar
-    // (bar at x=400,y=22,w=150). GameScene & HUD share screen coords.
-    powerSource: { x: 475, y: 30 },
+    // Screen anchor the power bolt springs from — sits under the centered HUD
+    // power bar (bar at x=400,y=8,w=180). GameScene & HUD share screen coords.
+    powerSource: { x: 490, y: 26 },
     // Lightning bolt fired when a building is powered ON.
     zap: {
       color: 0x7dd3fc, // electric blue
@@ -111,5 +111,37 @@ export const TUNING = {
       pulseMs: { small: 900, medium: 750, large: 550 }, // faster = hungrier
     },
     hudFlashMs: 220, // duration of the power-bar flash on a toggle
+    // SAM-e's console HUD chrome — phosphor-green accents + status colors.
+    hud: {
+      accent: 0x86efac, // phosphor green used for framing/dividers
+      online: "#86efac", // status dot + label when healthy
+      fault: "#fca5a5", // status dot + label during a brownout
+      dotBlinkMs: 600, // blink cadence of the ● status indicator
+      // Owl roster: one glyph per expected owl this wave. Starts as a faded
+      // outline; flips to a full owl/owlet on delivery or a frown on rage-quit.
+      owlPending: "🦉", // faded placeholder for an owl not yet resolved
+      owlPendingAlpha: 0.22,
+      owlProfessor: "🦉", // delivered professor
+      owlStudent: "🐤", // delivered student
+      owlFail: "🙁", // rage-quit / lost
+      owlSize: 16, // px font size of each roster glyph
+      owlStep: 20, // px between glyphs
+      owlStartX: 14, // left edge of the roster row
+      owlY: 32, // baseline row for the roster (second HUD tier)
+    },
+    // Subtle CRT screen effect drawn over the whole board (in the HUD scene).
+    // Sells "you're looking at SAM-e's monitor." Keep alphas low = readable.
+    crt: {
+      scanlineSpacing: 3, // px between horizontal scan lines
+      scanlineColor: 0x000000,
+      scanlineAlpha: 0.16, // opacity of each dark scan line
+      flickerColor: 0x86efac, // faint green wash that wobbles over the screen
+      flickerBaseAlpha: 0.03,
+      flickerAmplitude: 0.02, // +/- swing added to base via a sine over time
+      flickerSpeed: 0.012, // radians per ms of the flicker sine
+      vignetteColor: 0x000000,
+      vignetteAlpha: 0.35, // darkness at the very screen edges
+      vignetteSize: 90, // px depth of the edge darkening
+    },
   },
 };
