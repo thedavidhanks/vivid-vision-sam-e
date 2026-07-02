@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Owl / Owlet art preview</title>
+    <style>
+      html, body { margin: 0; background: #0f172a; color: #cbd5e1; font-family: system-ui, sans-serif; }
+      #wrap { display: flex; flex-direction: column; align-items: center; padding: 16px; }
+      h1 { font-size: 16px; font-weight: 600; margin: 8px 0 4px; }
+      p { font-size: 12px; color: #94a3b8; margin: 0 0 12px; }
+    </style>
+  </head>
+  <body>
+    <div id="wrap">
+      <h1>Owl &amp; Owlet — Down / Up / Left / Right (animated walk)</h1>
+      <p>Left is a mirror of Right. Down = front view, Up = back view. Reload to see tweaks.</p>
+      <div id="game"></div>
+    </div>
+    <script type="module" src="/src/preview/owlPreview.ts"></script>
+  </body>
+</html>

@@ -82,6 +82,7 @@ export const CAMPUS: CampusDef = {
       name: "Anderson Hall",
       // North edge, west half. SVG rect (120,0,310,60).
       x: 275, y: ty(30), w: 310, h: 60 * SY,
+      color: 0xe23b3b, // red
       doors: [{ x: 400, y: ty(60), w: 40, h: 20 * SY }], // south face onto the quad
     },
     {
@@ -89,6 +90,7 @@ export const CAMPUS: CampusDef = {
       name: "Herzstein Hall",
       // North edge, east half. SVG rect (570,0,310,60).
       x: 725, y: ty(30), w: 310, h: 60 * SY,
+      color: 0x2f6df6, // blue
       doors: [{ x: 600, y: ty(60), w: 40, h: 20 * SY }], // south face
     },
     {
@@ -98,6 +100,7 @@ export const CAMPUS: CampusDef = {
       // the quad (top of text points right, toward center).
       x: 25, y: ty(320), w: 50, h: 480 * SY,
       labelAngle: 90,
+      color: 0x1fbf4f, // green
       doors: [{ x: 50, y: ty(300), w: 20, h: 40 * SY }], // east face onto the quad
     },
     {
@@ -108,6 +111,7 @@ export const CAMPUS: CampusDef = {
       // Herzstein (north) and Sewall (south) approach paths.
       x: 935, y: ty(320), w: 50, h: 480 * SY,
       labelAngle: -90,
+      color: 0x9b4dff, // purple
       doors: [
         { x: 910, y: ty(300), w: 20, h: 40 * SY }, // center
         { x: 910, y: ty(100), w: 20, h: 40 * SY }, // north — Herzstein path
@@ -119,6 +123,7 @@ export const CAMPUS: CampusDef = {
       name: "Rayzor Hall",
       // South edge, west half. SVG rect (190,540,240,60).
       x: 310, y: ty(570), w: 240, h: 60 * SY,
+      color: 0xff8c1a, // orange
       doors: [{ x: 400, y: ty(540), w: 40, h: 20 * SY }], // north face
     },
     {
@@ -126,6 +131,7 @@ export const CAMPUS: CampusDef = {
       name: "Sewall Hall",
       // South edge, east half. SVG rect (570,540,270,60).
       x: 705, y: ty(570), w: 270, h: 60 * SY,
+      color: 0x14c4c4, // teal
       doors: [{ x: 600, y: ty(540), w: 40, h: 20 * SY }], // north face
     },
   ],

@@ -26,7 +26,8 @@ export const TUNING = {
   // ---- WATER LEAKS ---------------------------------------------------------
   water: {
     reductionTime: 3, // seconds a drone must hover to fully repair (reduce) a leak
-    radius: 36, // leak footprint that blocks any path crossing it
+    radius: 36, // leak footprint (visual + slowdown zone)
+    waterHazardWalkingFactor: 0.5, // owls walk at this fraction of their adjusted speed while inside a leak
   },
 
   // ---- POWER ---------------------------------------------------------------
@@ -59,11 +60,21 @@ export const TUNING = {
   person: {
     patience: 18, // seconds of patience while stuck/waiting before leaving
     radius: 15,
+    walkFrameRate: 7, // fps of the 2-frame walk cycle while moving
   },
 
   // ---- ECONOMY -------------------------------------------------------------
   economy: {
+    // Base delivery rate per person kind. The amount actually paid scales with
+    // how SATISFIED the owl is on arrival (its remaining-patience fraction),
+    // via satisfaction.min..max below. A happy owl that walked straight in
+    // (satisfaction 1) pays base × max; one that sat stuck at a door (low
+    // patience) pays base × min. Costs in upgrades.ts assume near-max play.
     pay: { professor: 30, student: 18 } as Record<string, number>,
+    satisfaction: {
+      minMultiplier: 0.5, // payout at 0 satisfaction (barely-in-time arrival)
+      maxMultiplier: 1.5, // payout at full satisfaction (walked right in)
+    },
     deliveryRepRefund: 2, // rep regained per successful delivery
     repairReward: 5, // money earned each time a drone fully clears a leak
   },

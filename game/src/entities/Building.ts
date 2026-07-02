@@ -10,6 +10,8 @@ import { TUNING } from "../data/tuning";
 // visitors. Buildings always start OFF.
 const SIZE_SCALE: Record<BuildingSize, number> = { small: 0.8, medium: 1.0, large: 1.2 };
 const SIZE_LETTER: Record<BuildingSize, string> = { small: "S", medium: "M", large: "L" };
+const BORDER_W = 6; // thick identity border; its color is the building's fixed color
+const BORDER_FALLBACK = 0x0b1220; // for any building without a color assigned
 
 export class Building {
   scene: Phaser.Scene;
@@ -37,7 +39,7 @@ export class Building {
 
     this.rect = scene.add
       .rectangle(def.x, def.y, def.w, def.h, this.baseColor())
-      .setStrokeStyle(2, 0x0b1220)
+      .setStrokeStyle(BORDER_W, def.color ?? BORDER_FALLBACK) // fixed identity color
       .setDepth(5);
 
     // Rotated labels (edge buildings) read along their long axis, so wrap on the

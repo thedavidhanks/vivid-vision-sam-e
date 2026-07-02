@@ -27,6 +27,8 @@ export interface BuildingDef {
   h: number;
   doors: DoorDef[]; // arrival targets — one or more entrance boxes
   labelAngle?: number; // degrees to rotate the name label (e.g. ±90 for edge buildings)
+  color?: number; // fixed identity color — shown as the building's border and on the
+  // garments of owls routed here (wayfinding cue). Never changes.
 }
 
 // A hidden spawn point where people can appear. Building doors also act as

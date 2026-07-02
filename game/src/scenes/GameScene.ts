@@ -12,8 +12,7 @@ import { Drone } from "../entities/Drone";
 import { Obstruction } from "../entities/Obstruction";
 import { DrawController } from "../systems/pathDraw";
 import { computeLoad, stepBattery, canPowerOn, costForSize } from "../systems/power";
-import { payForDelivery, payForRepair } from "../systems/economy";
-import { pathHitsCircle } from "../systems/geometry";
+import { payForSatisfiedDelivery, payForRepair } from "../systems/economy";
 import { walkwaySpeedFactor } from "../systems/walkways";
 
 const PATH_COLORS = [0x38bdf8, 0xa78bfa, 0x34d399, 0xf472b6, 0xfbbf24, 0xfb7185];
@@ -21,7 +20,6 @@ const PATH_COLORS = [0x38bdf8, 0xa78bfa, 0x34d399, 0xf472b6, 0xfbbf24, 0xfb7185]
 export class GameScene extends Phaser.Scene {
   buildings: Building[] = [];
   buildingById = new Map<string, Building>();
-  buildingShort = new Map<string, string>();
   activeBuildingIds: string[] = [];
   currentLoad = 0;
 
@@ -56,7 +54,6 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor("#1b2a1f");
     this.buildings = [];
     this.buildingById.clear();
-    this.buildingShort.clear();
     this.people = [];
     this.drones = [];
     this.leaks = [];
@@ -196,13 +193,6 @@ export class GameScene extends Phaser.Scene {
       const b = new Building(this, def);
       this.buildings.push(b);
       this.buildingById.set(def.id, b);
-      const short = def.name
-        .split(/\s+/)
-        .map((w) => w[0])
-        .join("")
-        .slice(0, 3)
-        .toUpperCase();
-      this.buildingShort.set(def.id, short);
     }
     // Spawn points are the campus spawn markers plus every building door. They
     // are intentionally not drawn (people simply appear at them).
@@ -348,8 +338,7 @@ export class GameScene extends Phaser.Scene {
     const destId = Phaser.Utils.Array.GetRandom(choices);
     const dest = this.buildingById.get(destId)!.def;
     const kind: PersonKind = Math.random() < wave.professorRatio ? "professor" : "student";
-    const short = this.buildingShort.get(dest.id) ?? "?";
-    const person = new Person(this, spawn.x, spawn.y, kind, dest.id, short);
+    const person = new Person(this, spawn.x, spawn.y, kind, dest.id);
     this.people.push(person);
     this.personColor.set(person, PATH_COLORS[this.colorIdx++ % PATH_COLORS.length]);
     this.spawnedCount++;
@@ -376,11 +365,7 @@ export class GameScene extends Phaser.Scene {
     // The player must steer the owl to a building entrance themselves — the path
     // is used exactly as drawn (no auto-routing to the door). If it doesn't end
     // in an entrance box, the owl walks to the end and then waits (see advance).
-    const blocked = this.leaks.some((l) => pathHitsCircle(pts, l.pos, l.radius));
-    if (blocked) {
-      this.draw.flashInvalid(pts);
-      return;
-    }
+    // Paths may cross water; owls simply slow down while inside a leak (see updatePeople).
     person.setPath(pts);
   }
 
@@ -460,8 +445,12 @@ export class GameScene extends Phaser.Scene {
         // Positional bonus: faster while physically on a speedBonus walkway.
         const onWalkway = walkwaySpeedFactor(person.pos, CAMPUS.walkways, TUNING.walkway.speedBonus);
         const speed = base * gameState.walkwayMultiplier * onWalkway;
-        this.advance(person, speed * dt);
+        // Water is a soft hazard: owls wade through leaks at a reduced fraction of their adjusted speed.
+        const inWater = this.leaks.some((l) => l.contains(person.pos));
+        const hazard = inWater ? TUNING.water.waterHazardWalkingFactor : 1;
+        this.advance(person, speed * hazard * dt);
       } else if (person.state === "waiting" || person.state === "atDoor") {
+        person.idle(); // stand still (facing last direction) while stuck/waiting
         person.patience -= dt;
         if (person.state === "atDoor") {
           const b = this.buildingById.get(person.destId)!;
@@ -573,13 +562,18 @@ export class GameScene extends Phaser.Scene {
 
   private deliver(person: Person) {
     person.state = "done";
-    gameState.money += payForDelivery(person.kind);
+    // Payout scales with how satisfied the owl is on arrival (remaining patience).
+    const sat = person.satisfaction;
+    const pay = payForSatisfiedDelivery(person.kind, sat);
+    gameState.money += pay;
     gameState.reputation = Math.min(
       TUNING.reputation.start,
       gameState.reputation + TUNING.economy.deliveryRepRefund
     );
     EventBus.emit(EV.personDelivered, person.kind);
-    this.floatText(person.sprite.x, person.sprite.y, `+$${payForDelivery(person.kind)}`, "#34d399");
+    // Colour the payout by satisfaction so happy (green) vs. grumpy (red) reads at a glance.
+    const color = sat > 0.66 ? "#34d399" : sat > 0.33 ? "#fbbf24" : "#f87171";
+    this.floatText(person.sprite.x, person.sprite.y, `+$${pay}`, color);
     this.popEffect(person.sprite.x, person.sprite.y, 0x34d399);
     this.removePerson(person);
   }
