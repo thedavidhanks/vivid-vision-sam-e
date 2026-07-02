@@ -9,4 +9,10 @@ export default defineConfig({
     outDir: "dist",
     target: "es2020",
   },
+  // host: true binds 0.0.0.0 so the dev server is reachable through the dev
+  // container's forwarded port (see .devcontainer/devcontainer.json).
+  server: {
+    host: true,
+    port: 5173,
+  },
 });
