@@ -11,8 +11,8 @@ import { Person } from "../entities/Person";
 import { Drone } from "../entities/Drone";
 import { Obstruction } from "../entities/Obstruction";
 import { DrawController } from "../systems/pathDraw";
-import { stepPower } from "../systems/power";
-import { payForDelivery } from "../systems/economy";
+import { computeLoad, stepBattery, canPowerOn, costForSize } from "../systems/power";
+import { payForDelivery, payForRepair } from "../systems/economy";
 import { pathHitsCircle } from "../systems/geometry";
 
 const PATH_COLORS = [0x38bdf8, 0xa78bfa, 0x34d399, 0xf472b6, 0xfbbf24, 0xfb7185];
@@ -21,6 +21,8 @@ export class GameScene extends Phaser.Scene {
   buildings: Building[] = [];
   buildingById = new Map<string, Building>();
   buildingShort = new Map<string, string>();
+  activeBuildingIds: string[] = [];
+  currentLoad = 0;
 
   people: Person[] = [];
   drones: Drone[] = [];
@@ -123,11 +125,29 @@ export class GameScene extends Phaser.Scene {
   }
 
   private wireInput() {
+    // Escape pauses the game and pops up the manual overlay.
+    this.input.keyboard?.on("keydown-ESC", () => {
+      if (this.ended || this.betweenWaves || this.scene.isActive("Manual")) return;
+      this.scene.launch("Manual");
+      this.scene.pause();
+    });
+
     this.input.on(Phaser.Input.Events.GAMEOBJECT_DOWN, (_p: Phaser.Input.Pointer, obj: any) => {
       if (this.ended || this.betweenWaves) return;
       const kind = obj.getData?.("kind");
       if (kind === "building") {
-        (obj.getData("ref") as Building).toggle();
+        const b = obj.getData("ref") as Building;
+        if (!b.powered) {
+          // Block powering ON when it would overload supply (and no battery covers it).
+          const mult = gameState.costMultiplier;
+          const load = computeLoad(this.buildings.map((x) => x.cost(mult)));
+          const cost = costForSize(b.size, mult);
+          if (!canPowerOn(load, cost, gameState.supply, gameState.battery.charge)) {
+            this.showNoPowerCue(b);
+            return;
+          }
+        }
+        b.toggle();
       } else if (kind === "person") {
         const person = obj.getData("ref") as Person;
         if (person.state === "waiting" || person.state === "walking" || person.state === "atDoor") {
@@ -160,14 +180,19 @@ export class GameScene extends Phaser.Scene {
     const wave = WAVES[index];
     gameState.waveIndex = index;
 
-    // apply grid upgrade
+    // factory supply for this wave (+ grid upgrade); battery starts empty.
     const hasGrid = gameState.upgrades.has("grid");
-    gameState.power = {
-      capacity: wave.capacity + (hasGrid ? 15 : 0),
-      gridRate: wave.gridRate + (hasGrid ? 2 : 0),
-      solarRate: 0,
-      reserve: Math.min(wave.startReserve, wave.capacity + (hasGrid ? 15 : 0)),
-    };
+    gameState.supply = wave.supply + (hasGrid ? TUNING.power.gridSupplyBonus : 0);
+    gameState.battery = { capacity: gameState.batteryCapacity, charge: 0 };
+
+    // activate this wave's buildings (with sizes); hide the rest. All start OFF.
+    const sizeById = new Map(wave.buildings.map((wb) => [wb.id, wb.size]));
+    for (const b of this.buildings) {
+      const size = sizeById.get(b.def.id);
+      b.setActive(size !== undefined, size ?? "small");
+    }
+    this.activeBuildingIds = wave.buildings.map((wb) => wb.id);
+    this.currentLoad = 0;
 
     this.waveTotal = wave.people;
     this.spawnedCount = 0;
@@ -182,7 +207,8 @@ export class GameScene extends Phaser.Scene {
   private spawnPerson() {
     const wave = WAVES[gameState.waveIndex];
     const gate = Phaser.Utils.Array.GetRandom(CAMPUS.gates);
-    const dest = Phaser.Utils.Array.GetRandom(CAMPUS.buildings);
+    const destId = Phaser.Utils.Array.GetRandom(this.activeBuildingIds);
+    const dest = this.buildingById.get(destId)!.def;
     const kind: PersonKind = Math.random() < wave.professorRatio ? "professor" : "student";
     const short = this.buildingShort.get(dest.id) ?? "?";
     const person = new Person(this, gate.x, gate.y, kind, dest.id, short);
@@ -254,17 +280,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updatePower(dt: number) {
-    const draw = this.buildings.reduce(
-      (sum, b) => sum + b.drawRate(gameState.lightDrawMultiplier),
-      0
-    );
-    const res = stepPower(gameState.power, draw, dt);
-    gameState.power.reserve = res.reserve;
-    this.brownout = res.brownout;
-    if (res.brownout) {
+    const mult = gameState.costMultiplier;
+    const load = computeLoad(this.buildings.map((b) => b.cost(mult)));
+    this.currentLoad = load;
+    const { supply, battery } = gameState;
+
+    const step = stepBattery(battery, load, supply, TUNING.power.battery.chargeRate, dt);
+    battery.charge = step.charge;
+    this.brownout = step.brownout;
+
+    if (step.brownout) {
       gameState.reputation -= TUNING.power.brownoutRepDrain * dt;
-      // rolling blackout: shut everything down; player must re-power deliberately
-      for (const b of this.buildings) b.forceOff();
+      // battery emptied while overloaded: shed largest-first until load fits.
+      this.shedToFit(load, supply);
       this.cameras.main.setBackgroundColor("#2a1b1b");
     } else {
       this.cameras.main.setBackgroundColor("#1b2a1f");
@@ -272,10 +300,26 @@ export class GameScene extends Phaser.Scene {
     if (gameState.reputation <= 0) this.endGame(false);
   }
 
+  // Turn off ON buildings, largest cost first, until load is back within supply.
+  private shedToFit(load: number, supply: number) {
+    const mult = gameState.costMultiplier;
+    const on = this.buildings
+      .filter((b) => b.powered)
+      .sort((a, b) => costForSize(b.size, mult) - costForSize(a.size, mult));
+    let cur = load;
+    for (const b of on) {
+      if (cur <= supply) break;
+      cur -= b.cost(mult);
+      b.forceOff();
+    }
+  }
+
   private updatePeople(dt: number) {
-    const speed = TUNING.person.baseSpeed * gameState.walkwayMultiplier;
     for (const person of [...this.people]) {
       if (person.state === "walking") {
+        // Owls (professors) and owlets (students) have separate base speeds.
+        const base = person.kind === "professor" ? TUNING.speed.owl : TUNING.speed.owlet;
+        const speed = base * gameState.walkwayMultiplier;
         this.advance(person, speed * dt);
       } else if (person.state === "waiting" || person.state === "atDoor") {
         person.patience -= dt;
@@ -315,7 +359,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateDrones(dt: number) {
-    const dist = TUNING.drone.speed * dt;
+    const dist = TUNING.speed.drone * dt;
     for (const drone of this.drones) {
       if (drone.state === "enroute") {
         let remaining = dist;
@@ -339,7 +383,7 @@ export class GameScene extends Phaser.Scene {
       } else if (drone.state === "fixing") {
         drone.fixElapsed += dt;
         drone.sprite.setAngle(drone.sprite.angle + 12); // spin while working
-        if (drone.fixElapsed >= TUNING.drone.fixTime) {
+        if (drone.fixElapsed >= TUNING.water.reductionTime) {
           this.clearLeak(drone.target!);
           drone.target = null;
           drone.state = "idle";
@@ -397,7 +441,7 @@ export class GameScene extends Phaser.Scene {
 
   private rageQuit(person: Person) {
     person.state = "done";
-    gameState.reputation -= TUNING.reputation.perRageQuit;
+    gameState.reputation -= TUNING.reputation.studentLeavePenalty;
     EventBus.emit(EV.personRageQuit);
     this.floatText(person.sprite.x, person.sprite.y, "😠", "#f87171");
     this.popEffect(person.sprite.x, person.sprite.y, 0xf87171);
@@ -407,6 +451,8 @@ export class GameScene extends Phaser.Scene {
 
   private clearLeak(leak: Obstruction) {
     this.leaks = this.leaks.filter((l) => l !== leak);
+    gameState.money += payForRepair();
+    this.floatText(leak.x, leak.y, `+$${payForRepair()}`, "#63b3ed");
     this.popEffect(leak.x, leak.y, 0x63b3ed);
     leak.destroy();
   }
@@ -476,6 +522,14 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  // Brief feedback when a building can't be powered on (over supply, no battery).
+  private showNoPowerCue(b: Building) {
+    const prev = b.rect.strokeColor;
+    b.rect.setStrokeStyle(3, 0xef4444);
+    this.time.delayedCall(400, () => b.rect.setStrokeStyle(2, prev));
+    this.floatText(b.def.x, b.def.y - b.def.h / 2, "⚡✕ no power", "#f87171");
+  }
+
   private flashBanner(text: string) {
     const b = this.add
       .text(CAMPUS.width / 2, CAMPUS.height / 2, text, {
@@ -512,5 +566,17 @@ export class GameScene extends Phaser.Scene {
   }
   get isBrownout() {
     return this.brownout;
+  }
+  get powerLoad() {
+    return this.currentLoad;
+  }
+  get powerSupply() {
+    return gameState.supply;
+  }
+  get batteryCharge() {
+    return gameState.battery.charge;
+  }
+  get batteryCapacity() {
+    return gameState.battery.capacity;
   }
 }

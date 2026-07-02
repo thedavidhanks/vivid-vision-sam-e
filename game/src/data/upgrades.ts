@@ -4,17 +4,24 @@ import type { UpgradeDef } from "./types";
 export const UPGRADES: UpgradeDef[] = [
   {
     id: "grid",
-    name: "More kWh from Grid",
+    name: "Bigger Factory",
     cost: 60,
     unlockWave: 1,
-    description: "+2 kWh/sec supply and +15 reserve capacity.",
+    description: "+15 power supply.",
+  },
+  {
+    id: "battery",
+    name: "Battery Bank",
+    cost: 80,
+    unlockWave: 1,
+    description: "Store surplus power; run over supply until it drains.",
   },
   {
     id: "lights",
-    name: "Better Lights",
+    name: "Efficient Lights",
     cost: 70,
     unlockWave: 2,
-    description: "Powered buildings draw 25% less kWh.",
+    description: "Buildings cost 25% less power.",
   },
   {
     id: "walkways",

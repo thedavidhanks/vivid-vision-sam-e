@@ -54,8 +54,9 @@ export class HUDScene extends Phaser.Scene {
   }
 
   update() {
-    const p = gameState.power;
-    const frac = p.capacity > 0 ? Phaser.Math.Clamp(p.reserve / p.capacity, 0, 1) : 0;
+    const supply = this.game.powerSupply;
+    const available = Math.max(0, supply - this.game.powerLoad);
+    const frac = supply > 0 ? Phaser.Math.Clamp(available / supply, 0, 1) : 0;
 
     this.moneyText.setText(`$ ${Math.floor(gameState.money)}`);
     this.repText.setText(`❤ ${Math.max(0, Math.ceil(gameState.reputation))}`);
@@ -66,7 +67,7 @@ export class HUDScene extends Phaser.Scene {
       )}`
     );
 
-    // power meter
+    // power meter — power still AVAILABLE (supply − load); full & green = lots free
     const x = 400;
     const y = 22;
     const bw = 150;
@@ -74,16 +75,24 @@ export class HUDScene extends Phaser.Scene {
     this.bar.clear();
     this.bar.fillStyle(0x1e293b, 1);
     this.bar.fillRect(x, y, bw, bh);
-    const col = this.game.isBrownout ? 0xef4444 : frac > 0.4 ? 0x22c55e : frac > 0.2 ? 0xf59e0b : 0xef4444;
+    const col =
+      this.game.isBrownout || frac <= 0 ? 0xef4444 : frac > 0.4 ? 0x22c55e : frac > 0.2 ? 0xf59e0b : 0xef4444;
     this.bar.fillStyle(col, 1);
     this.bar.fillRect(x, y, bw * frac, bh);
     this.bar.lineStyle(1, 0x475569, 1);
     this.bar.strokeRect(x, y, bw, bh);
 
-    const label = this.game.isBrownout
-      ? "⚡ BROWNOUT!"
-      : `⚡ ${Math.floor(p.reserve)}/${p.capacity} kWh`;
-    this.powerLabel.setText(label);
+    // battery bar (only when a battery is owned)
+    const cap = this.game.batteryCapacity;
+    if (cap > 0) {
+      const bfrac = Phaser.Math.Clamp(this.game.batteryCharge / cap, 0, 1);
+      this.bar.fillStyle(0x1e293b, 1);
+      this.bar.fillRect(x, y + bh + 4, bw, 6);
+      this.bar.fillStyle(0x38bdf8, 1);
+      this.bar.fillRect(x, y + bh + 4, bw * bfrac, 6);
+    }
+
+    this.powerLabel.setText(this.game.isBrownout ? "⚡ BROWNOUT!" : `⚡ ${Math.round(available)}`);
     this.powerLabel.setColor(this.game.isBrownout ? "#fca5a5" : "#e2e8f0");
     this.powerLabel.setPosition(x + bw + 10, 12);
   }

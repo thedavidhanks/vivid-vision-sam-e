@@ -16,7 +16,7 @@ export class Obstruction {
     this.scene = scene;
     this.x = x;
     this.y = y;
-    this.radius = TUNING.leak.radius;
+    this.radius = TUNING.water.radius;
     this.gfx = scene.add.graphics().setDepth(8);
   }
 
