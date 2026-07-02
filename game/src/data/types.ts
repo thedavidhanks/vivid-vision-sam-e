@@ -71,7 +71,11 @@ export interface WaveDef {
   spawnInterval: number; // seconds between spawns
   professorRatio: number; // 0..1 chance a spawn is a professor
   supply: number; // flat factory supply this wave
-  buildings: WaveBuildingDef[]; // active buildings + sizes for this wave
+  activeSpawns: number; // how many spawn locations are active (drawn from CAMPUS spawn
+  // markers first, then building doors; clamped to the total available)
+  activeBuildings: number; // how many of `buildings` actually turn on (the first N;
+  // the rest stay on the map greyed-out). Clamped to buildings.length.
+  buildings: WaveBuildingDef[]; // candidate buildings + sizes, most-demanding first
   leakInterval: number; // seconds between leaks (0 = no leaks)
 }
 

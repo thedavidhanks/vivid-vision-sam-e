@@ -12,6 +12,8 @@ const SIZE_SCALE: Record<BuildingSize, number> = { small: 0.8, medium: 1.0, larg
 const SIZE_LETTER: Record<BuildingSize, string> = { small: "S", medium: "M", large: "L" };
 const BORDER_W = 6; // thick identity border; its color is the building's fixed color
 const BORDER_FALLBACK = 0x0b1220; // for any building without a color assigned
+const INACTIVE_BORDER = 0x475569; // greyed border for buildings inactive this wave
+const INACTIVE_ALPHA = 0.4; // dim inactive buildings so active ones read first
 
 export class Building {
   scene: Phaser.Scene;
@@ -76,23 +78,36 @@ export class Building {
     this.setActive(false, "small");
   }
 
-  /** Activate/deactivate for a wave. Inactive buildings hide and start OFF. */
+  /**
+   * Activate/deactivate for a wave. Inactive buildings stay on the map but are
+   * greyed out (grey border, dimmed) and can't be toggled or entered. All start
+   * OFF.
+   */
   setActive(active: boolean, size: BuildingSize) {
     this.active = active;
     this.size = size;
     this.powered = false; // buildings always start OFF each wave
 
-    this.rect.setVisible(active);
-    this.label.setVisible(active);
+    // Building box + name stay visible either way; only the interactive bits
+    // (status icon, door marks) are hidden while inactive.
+    this.rect.setVisible(true);
+    this.label.setVisible(true);
     this.statusIcon.setVisible(active);
     for (const m of this.doorMarks) m.setVisible(active);
 
     if (active) {
       this.applySizeVisual();
+      this.rect.setAlpha(1);
+      this.label.setAlpha(1);
+      this.rect.setStrokeStyle(BORDER_W, this.def.color ?? BORDER_FALLBACK);
       this.rect.setInteractive({ useHandCursor: true });
       this.rect.setData("kind", "building");
       this.rect.setData("ref", this);
     } else {
+      this.rect.setDisplaySize(this.def.w, this.def.h);
+      this.rect.setAlpha(INACTIVE_ALPHA);
+      this.label.setAlpha(INACTIVE_ALPHA);
+      this.rect.setStrokeStyle(BORDER_W, INACTIVE_BORDER); // greyed identity cue
       this.rect.disableInteractive();
     }
     this.refresh();

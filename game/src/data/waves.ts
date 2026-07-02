@@ -11,7 +11,9 @@ import type { WaveDef } from "./types";
 //   spawnInterval   seconds between spawns (lower = denser)
 //   professorRatio  0..1 chance a spawn is a professor (owl)
 //   supply          flat factory power available this wave
-//   buildings       which campus buildings are active + their size
+//   activeSpawns    how many spawn locations are live (more = harder to watch)
+//   activeBuildings how many of `buildings` turn on (first N); rest sit greyed-out
+//   buildings       candidate campus buildings + size, ordered most-demanding first
 //                   (size sets the flat cost: small 10 / medium 20 / large 30)
 //   leakInterval    seconds between water leaks (0 = none)
 // ============================================================================
@@ -22,7 +24,9 @@ export const WAVES: WaveDef[] = [
     spawnInterval: 3.2,
     professorRatio: 0.4,
     supply: 60,
-    // 6 × small = 60 == supply: power everything, no need to conserve.
+    activeSpawns: 4,
+    activeBuildings: 2,
+    // first 2 active: 2 × small = 20 vs 60: power both freely, no conserving.
     buildings: [
       { id: "fondren", size: "small" },
       { id: "herzstein", size: "small" },
@@ -39,7 +43,9 @@ export const WAVES: WaveDef[] = [
     spawnInterval: 2.6,
     professorRatio: 0.45,
     supply: 50,
-    // 20 + 5×10 = 70 > 50: must occasionally switch a building off.
+    activeSpawns: 4,
+    activeBuildings: 3,
+    // first 3 active: 20 + 2×10 = 40 vs 50: all fit — gentle intro to toggling.
     buildings: [
       { id: "fondren", size: "medium" },
       { id: "herzstein", size: "small" },
@@ -56,7 +62,9 @@ export const WAVES: WaveDef[] = [
     spawnInterval: 2.1,
     professorRatio: 0.5,
     supply: 50,
-    // 30 + 20 + 20 + 3×10 = 100 vs 50: heavy juggling; battery rewarded.
+    activeSpawns: 5,
+    activeBuildings: 3,
+    // first 3 active: 30 + 2×20 = 70 vs 50: juggling begins; battery rewarded.
     buildings: [
       { id: "fondren", size: "large" },
       { id: "herzstein", size: "medium" },
@@ -73,7 +81,9 @@ export const WAVES: WaveDef[] = [
     spawnInterval: 1.9,
     professorRatio: 0.5,
     supply: 55,
-    // 30 + 20 + 20 + 3×10 = 100 vs 55: sustained juggling under denser arrivals.
+    activeSpawns: 6,
+    activeBuildings: 4,
+    // first 4 active: 30 + 2×20 + 10 = 80 vs 55: sustained juggling, denser arrivals.
     buildings: [
       { id: "fondren", size: "large" },
       { id: "herzstein", size: "medium" },
@@ -90,7 +100,9 @@ export const WAVES: WaveDef[] = [
     spawnInterval: 1.7,
     professorRatio: 0.55,
     supply: 55,
-    // 30 + 30 + 20 + 20 + 2×10 = 120 vs 55: two large loads to trade off.
+    activeSpawns: 6,
+    activeBuildings: 4,
+    // first 4 active: 2×30 + 2×20 = 100 vs 55: two large loads to trade off.
     buildings: [
       { id: "fondren", size: "large" },
       { id: "herzstein", size: "large" },
@@ -107,7 +119,9 @@ export const WAVES: WaveDef[] = [
     spawnInterval: 1.5,
     professorRatio: 0.55,
     supply: 60,
-    // 3×30 + 2×20 + 10 = 140 vs 60: constant rotation; lights/battery shine.
+    activeSpawns: 6,
+    activeBuildings: 5,
+    // first 5 active: 3×30 + 2×20 = 130 vs 60: constant rotation; lights/battery shine.
     buildings: [
       { id: "fondren", size: "large" },
       { id: "herzstein", size: "large" },
@@ -124,7 +138,9 @@ export const WAVES: WaveDef[] = [
     spawnInterval: 1.4,
     professorRatio: 0.6,
     supply: 60,
-    // 4×30 + 2×20 = 160 vs 60: only a third can run at once; frantic leaks.
+    activeSpawns: 7,
+    activeBuildings: 5,
+    // first 5 active: 4×30 + 20 = 140 vs 60: only a third can run at once; frantic leaks.
     buildings: [
       { id: "fondren", size: "large" },
       { id: "herzstein", size: "large" },
@@ -141,7 +157,9 @@ export const WAVES: WaveDef[] = [
     spawnInterval: 1.3,
     professorRatio: 0.6,
     supply: 65,
-    // 6×30 = 180 vs 65: everything is large — the finale power crunch.
+    activeSpawns: 8,
+    activeBuildings: 6,
+    // all 6 active: 6×30 = 180 vs 65: everything is large — the finale power crunch.
     buildings: [
       { id: "fondren", size: "large" },
       { id: "herzstein", size: "large" },

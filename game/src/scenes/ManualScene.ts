@@ -27,8 +27,8 @@ export class ManualScene extends Phaser.Scene {
     const how = [
       "🦉 Owls with caps = professors.   🐤 Owlets with backpacks = students.",
       "",
-      "• Click a person and DRAG a path to their building. Release to send them.",
-      "• Some buildings must be powered ON (click them) to let people in —",
+      "• Click a person and DRAG a path to a similarly colored building. Release to send them.",
+      "• Buildings must be powered ON (click them) to let people in —",
       "  but lit buildings drain your kWh reserve. Turn them off when idle!",
       "• Water leaks block paths. Click a DRONE and drag it to the leak to fix it.",
       "• People run out of patience if stuck. Lose too many and it's game over.",

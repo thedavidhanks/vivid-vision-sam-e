@@ -27,6 +27,9 @@ export class GameScene extends Phaser.Scene {
   // `buildingId` is set for door spawns so we can avoid spawning a person at
   // the door of their own destination.
   spawnPoints: { x: number; y: number; buildingId: string | null }[] = [];
+  // The subset of spawnPoints live this wave (see WaveDef.activeSpawns). People
+  // only appear at these; set in startWave.
+  activeSpawnPoints: { x: number; y: number; buildingId: string | null }[] = [];
 
   people: Person[] = [];
   drones: Drone[] = [];
@@ -307,14 +310,20 @@ export class GameScene extends Phaser.Scene {
     gameState.supply = wave.supply + (hasGrid ? TUNING.power.gridSupplyBonus : 0);
     gameState.battery = { capacity: gameState.batteryCapacity, charge: 0 };
 
-    // activate this wave's buildings (with sizes); hide the rest. All start OFF.
-    const sizeById = new Map(wave.buildings.map((wb) => [wb.id, wb.size]));
+    // activate this wave's first `activeBuildings` (with sizes); the rest sit on
+    // the map greyed-out. All start OFF.
+    const active = wave.buildings.slice(0, wave.activeBuildings);
+    const sizeById = new Map(active.map((wb) => [wb.id, wb.size]));
     for (const b of this.buildings) {
       const size = sizeById.get(b.def.id);
       b.setActive(size !== undefined, size ?? "small");
     }
-    this.activeBuildingIds = wave.buildings.map((wb) => wb.id);
+    this.activeBuildingIds = active.map((wb) => wb.id);
     this.currentLoad = 0;
+
+    // limit this wave to its configured number of spawn locations (markers first,
+    // then doors — see createCampus order; clamped to what's available).
+    this.activeSpawnPoints = this.spawnPoints.slice(0, wave.activeSpawns);
 
     this.waveTotal = wave.people;
     this.spawnedCount = 0;
@@ -328,7 +337,7 @@ export class GameScene extends Phaser.Scene {
 
   private spawnPerson() {
     const wave = WAVES[gameState.waveIndex];
-    const spawn = Phaser.Utils.Array.GetRandom(this.spawnPoints);
+    const spawn = Phaser.Utils.Array.GetRandom(this.activeSpawnPoints);
     // Don't route a person to the building whose door they spawned at.
     let choices = this.activeBuildingIds;
     if (spawn.buildingId) {
