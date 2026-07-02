@@ -1,0 +1,38 @@
+{
+  "name": "campus-control",
+  // Debian/Node image mirroring the Linux + Node 24 GitHub Actions runner.
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:24-bookworm",
+
+  "features": {
+    // Claude Code CLI + VS Code extension, installed into the container.
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
+    // gcloud CLI, so Claude Code can auth to Vertex AI via Application Default Credentials.
+    "ghcr.io/dhoeric/features/google-cloud-cli:1": {}
+  },
+
+  // Point Claude Code at Vertex AI. Project ID is intentionally NOT set here (public repo);
+  // it is resolved from `gcloud config` inside the container. See .devcontainer/README.md.
+  "containerEnv": {
+    "CLAUDE_CODE_USE_VERTEX": "1",
+    "CLOUD_ML_REGION": "global"
+  },
+
+  // Vite dev server.
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": { "label": "Vite dev server", "onAutoForward": "notify" }
+  },
+
+  // Fix volume-mount ownership, then install game deps (same command CI runs).
+  "postCreateCommand": "sudo chown -R node:node /home/node/.claude /home/node/.config/gcloud; cd game && npm ci",
+
+  // Non-root user (required by Claude Code) whose home holds the persisted config volumes.
+  "remoteUser": "node",
+
+  "mounts": [
+    // Persist Claude Code auth/settings/history across rebuilds.
+    "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume",
+    // Persist gcloud config + Application Default Credentials across rebuilds.
+    "source=gcloud-config-${devcontainerId},target=/home/node/.config/gcloud,type=volume"
+  ]
+}
