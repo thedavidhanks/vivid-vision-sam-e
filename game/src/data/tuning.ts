@@ -16,6 +16,13 @@ export const TUNING = {
     drone: 175, // repair-drone flight speed
   },
 
+  // ---- WALKWAYS ------------------------------------------------------------
+  // Paved quad paths. A person whose position is on a speedBonus walkway moves
+  // faster by this multiplier (stacks with the "walkway" upgrade). 1 = no bonus.
+  walkway: {
+    speedBonus: 1.25,
+  },
+
   // ---- WATER LEAKS ---------------------------------------------------------
   water: {
     reductionTime: 3, // seconds a drone must hover to fully repair (reduce) a leak
@@ -65,5 +72,33 @@ export const TUNING = {
   draw: {
     minPointDist: 9, // px between captured polyline points
     commitSnapDist: 55, // how close to a target the release must land
+  },
+
+  // ---- FX (feedback for spending power) ------------------------------------
+  // Purely visual; sells "powering a building draws from the shared factory."
+  fx: {
+    // Screen anchor the power bolt springs from — sits under the HUD power bar
+    // (bar at x=400,y=22,w=150). GameScene & HUD share screen coords.
+    powerSource: { x: 475, y: 30 },
+    // Lightning bolt fired when a building is powered ON.
+    zap: {
+      color: 0x7dd3fc, // electric blue
+      alpha: 0.8, // peak opacity of the bolt
+      durationMs: 600, // total lifespan across all flickers
+      flickers: 4, // how many times the bolt strobes on/off
+      segments: 6, // number of jagged kinks along the bolt
+      jitter: 14, // px max perpendicular offset per kink
+      width: 2.5, // stroke width
+    },
+    // Pulsing "consumption" glow behind a powered building. Bigger/costlier
+    // buildings glow larger and pulse faster (hungrier).
+    aura: {
+      color: 0xfbbf24, // amber
+      baseAlpha: 0.12,
+      peakAlpha: 0.38,
+      pad: { small: 8, medium: 12, large: 18 }, // px added around building
+      pulseMs: { small: 900, medium: 750, large: 550 }, // faster = hungrier
+    },
+    hudFlashMs: 220, // duration of the power-bar flash on a toggle
   },
 };

@@ -21,14 +21,15 @@ export const WAVES: WaveDef[] = [
     people: 6,
     spawnInterval: 3.2,
     professorRatio: 0.4,
-    supply: 50,
-    // 5 × small = 50 == supply: power everything, no need to conserve.
+    supply: 60,
+    // 6 × small = 60 == supply: power everything, no need to conserve.
     buildings: [
       { id: "fondren", size: "small" },
       { id: "herzstein", size: "small" },
-      { id: "chapel", size: "small" },
-      { id: "duncan", size: "small" },
-      { id: "brochstein", size: "small" },
+      { id: "sewall", size: "small" },
+      { id: "lovett", size: "small" },
+      { id: "rayzor", size: "small" },
+      { id: "anderson", size: "small" },
     ],
     leakInterval: 0, // gentle: no leaks in wave 1
   },
@@ -38,13 +39,14 @@ export const WAVES: WaveDef[] = [
     spawnInterval: 2.6,
     professorRatio: 0.45,
     supply: 50,
-    // 20 + 4×10 = 60 > 50: must occasionally switch a building off.
+    // 20 + 5×10 = 70 > 50: must occasionally switch a building off.
     buildings: [
       { id: "fondren", size: "medium" },
       { id: "herzstein", size: "small" },
-      { id: "chapel", size: "small" },
-      { id: "duncan", size: "small" },
-      { id: "brochstein", size: "small" },
+      { id: "sewall", size: "small" },
+      { id: "lovett", size: "small" },
+      { id: "rayzor", size: "small" },
+      { id: "anderson", size: "small" },
     ],
     leakInterval: 14,
   },
@@ -54,13 +56,14 @@ export const WAVES: WaveDef[] = [
     spawnInterval: 2.1,
     professorRatio: 0.5,
     supply: 50,
-    // 30 + 20 + 20 + 10 + 10 = 90 vs 50: heavy juggling; battery rewarded.
+    // 30 + 20 + 20 + 3×10 = 100 vs 50: heavy juggling; battery rewarded.
     buildings: [
       { id: "fondren", size: "large" },
       { id: "herzstein", size: "medium" },
-      { id: "chapel", size: "small" },
-      { id: "duncan", size: "medium" },
-      { id: "brochstein", size: "small" },
+      { id: "lovett", size: "medium" },
+      { id: "sewall", size: "small" },
+      { id: "rayzor", size: "small" },
+      { id: "anderson", size: "small" },
     ],
     leakInterval: 9,
   },

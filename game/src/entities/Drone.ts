@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { Vec } from "../data/types";
 import type { Obstruction } from "./Obstruction";
 
-export type DroneState = "idle" | "enroute" | "fixing";
+export type DroneState = "idle" | "enroute" | "fixing" | "returning";
 
 // Player-directed repair drone. Click it, draw a path to a leak; it flies over
 // pedestrians (no collision) and repairs on arrival.
@@ -34,6 +34,16 @@ export class Drone {
     this.target = target;
     this.fixElapsed = 0;
     this.state = "enroute";
+  }
+
+  // Fly straight back to the docking station. Called once a repair finishes so
+  // drones rest at the dock rather than idling at the leak they just fixed.
+  returnHome() {
+    this.path = [this.pos, this.home];
+    this.seg = 0;
+    this.target = null;
+    this.fixElapsed = 0;
+    this.state = "returning";
   }
 
   get pos(): Vec {

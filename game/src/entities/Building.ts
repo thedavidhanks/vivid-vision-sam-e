@@ -1,6 +1,8 @@
 import Phaser from "phaser";
-import type { BuildingDef, BuildingSize, Vec } from "../data/types";
+import type { BuildingDef, BuildingSize, DoorDef, Vec } from "../data/types";
 import { costForSize } from "../systems/power";
+import { pointInRect } from "../systems/geometry";
+import { TUNING } from "../data/tuning";
 
 // A campus building. Each wave activates a subset of buildings and gives each a
 // size (small/medium/large) that sets its flat power cost. Active buildings can
@@ -17,27 +19,40 @@ export class Building {
   powered = false;
   rect: Phaser.GameObjects.Rectangle;
   label: Phaser.GameObjects.Text;
-  doorMark: Phaser.GameObjects.Arc;
+  doorMarks: Phaser.GameObjects.Rectangle[];
   statusIcon: Phaser.GameObjects.Text;
+  private aura: Phaser.GameObjects.Rectangle;
+  private auraTween?: Phaser.Tweens.Tween;
 
   constructor(scene: Phaser.Scene, def: BuildingDef) {
     this.scene = scene;
     this.def = def;
+
+    // Pulsing "consumption" glow behind the building; visible only when powered.
+    this.aura = scene.add
+      .rectangle(def.x, def.y, def.w, def.h, TUNING.fx.aura.color, TUNING.fx.aura.baseAlpha)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(4)
+      .setVisible(false);
 
     this.rect = scene.add
       .rectangle(def.x, def.y, def.w, def.h, this.baseColor())
       .setStrokeStyle(2, 0x0b1220)
       .setDepth(5);
 
+    // Rotated labels (edge buildings) read along their long axis, so wrap on the
+    // building's height instead of its width.
+    const rotated = def.labelAngle === 90 || def.labelAngle === -90;
     this.label = scene.add
-      .text(def.x, def.y - 4, def.name, {
+      .text(def.x, def.y, def.name, {
         fontFamily: "system-ui, sans-serif",
         fontSize: "13px",
         color: "#f8fafc",
         align: "center",
-        wordWrap: { width: def.w - 12 },
+        wordWrap: { width: (rotated ? def.h : def.w) - 12 },
       })
       .setOrigin(0.5)
+      .setAngle(def.labelAngle ?? 0)
       .setDepth(6);
 
     this.statusIcon = scene.add
@@ -49,7 +64,12 @@ export class Building {
       .setOrigin(0.5)
       .setDepth(6);
 
-    this.doorMark = scene.add.circle(def.door.x, def.door.y, 6, 0x64748b).setDepth(6);
+    this.doorMarks = def.doors.map((d) =>
+      scene.add
+        .rectangle(d.x, d.y, d.w, d.h, 0x64748b, 0.85)
+        .setStrokeStyle(2, 0x0b1220)
+        .setDepth(6)
+    );
 
     this.setActive(false, "small");
   }
@@ -63,7 +83,7 @@ export class Building {
     this.rect.setVisible(active);
     this.label.setVisible(active);
     this.statusIcon.setVisible(active);
-    this.doorMark.setVisible(active);
+    for (const m of this.doorMarks) m.setVisible(active);
 
     if (active) {
       this.applySizeVisual();
@@ -79,14 +99,42 @@ export class Building {
   private applySizeVisual() {
     const f = SIZE_SCALE[this.size];
     this.rect.setDisplaySize(this.def.w * f, this.def.h * f);
+    const pad = TUNING.fx.aura.pad[this.size];
+    this.aura.setDisplaySize(this.def.w * f + pad * 2, this.def.h * f + pad * 2);
+  }
+
+  // Start (or stop) the pulsing consumption glow to match the powered state.
+  // Bigger buildings pulse faster to read as "hungrier".
+  private updateAura() {
+    const on = this.active && this.powered;
+    this.aura.setVisible(on);
+    if (on && !this.auraTween) {
+      this.aura.setAlpha(TUNING.fx.aura.baseAlpha);
+      this.auraTween = this.scene.tweens.add({
+        targets: this.aura,
+        alpha: TUNING.fx.aura.peakAlpha,
+        duration: TUNING.fx.aura.pulseMs[this.size],
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    } else if (!on && this.auraTween) {
+      this.auraTween.stop();
+      this.auraTween = undefined;
+    }
   }
 
   private baseColor(): number {
     return this.powered ? 0xca8a04 : 0x334155; // lit amber vs dark slate
   }
 
-  get door(): Vec {
-    return this.def.door;
+  get doors(): DoorDef[] {
+    return this.def.doors;
+  }
+
+  /** True if point `p` (an owl's position) lies in any entrance box (+ margin). */
+  entranceContains(p: Vec, margin = 0): boolean {
+    return this.def.doors.some((d) => pointInRect(p, d, margin));
   }
 
   /** Flat power cost this building currently draws (0 when off/inactive). */
@@ -118,6 +166,7 @@ export class Building {
     const letter = SIZE_LETTER[this.size];
     this.statusIcon.setText(this.powered ? `⚡ ON (${letter})` : `⚡ OFF (${letter})`);
     this.statusIcon.setColor(this.powered ? "#fde68a" : "#fca5a5");
-    this.doorMark.setFillStyle(this.powered ? 0xfde68a : 0x64748b);
+    for (const m of this.doorMarks) m.setFillStyle(this.powered ? 0xfde68a : 0x64748b, 0.85);
+    this.updateAura();
   }
 }

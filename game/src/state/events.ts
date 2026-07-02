@@ -2,6 +2,7 @@
 export const EV = {
   moneyChanged: "money:changed",
   powerChanged: "power:changed",
+  powerToggled: "power:toggled",
   reputationChanged: "reputation:changed",
   waveChanged: "wave:changed",
   brownout: "power:brownout",

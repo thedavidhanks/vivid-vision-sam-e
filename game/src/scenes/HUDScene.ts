@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { TUNING } from "../data/tuning";
 import { gameState } from "../state/GameState";
+import { EventBus } from "../state/EventBus";
+import { EV } from "../state/events";
 import type { GameScene } from "./GameScene";
 
 // Read-only overlay. Reads GameState + a few GameScene getters each frame rather
@@ -12,6 +14,7 @@ export class HUDScene extends Phaser.Scene {
   private waveText!: Phaser.GameObjects.Text;
   private powerLabel!: Phaser.GameObjects.Text;
   private bar!: Phaser.GameObjects.Graphics;
+  private flashT = 0; // ms remaining on the power-bar flash (set on a toggle)
 
   constructor() {
     super("HUD");
@@ -51,6 +54,16 @@ export class HUDScene extends Phaser.Scene {
     });
 
     this.bar = this.add.graphics();
+
+    // Flash the power bar whenever a building is toggled, so the drain registers.
+    EventBus.on(EV.powerToggled, this.onPowerToggled, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+      EventBus.off(EV.powerToggled, this.onPowerToggled, this)
+    );
+  }
+
+  private onPowerToggled() {
+    this.flashT = TUNING.fx.hudFlashMs;
   }
 
   update() {
@@ -81,6 +94,16 @@ export class HUDScene extends Phaser.Scene {
     this.bar.fillRect(x, y, bw * frac, bh);
     this.bar.lineStyle(1, 0x475569, 1);
     this.bar.strokeRect(x, y, bw, bh);
+
+    // Flash overlay on toggle: a bright wash + thick stroke that fades out.
+    if (this.flashT > 0) {
+      this.flashT = Math.max(0, this.flashT - this.sys.game.loop.delta);
+      const a = this.flashT / TUNING.fx.hudFlashMs;
+      this.bar.fillStyle(0xf8fafc, 0.5 * a);
+      this.bar.fillRect(x, y, bw, bh);
+      this.bar.lineStyle(2, 0x7dd3fc, a);
+      this.bar.strokeRect(x - 1, y - 1, bw + 2, bh + 2);
+    }
 
     // battery bar (only when a battery is owned)
     const cap = this.game.batteryCapacity;
