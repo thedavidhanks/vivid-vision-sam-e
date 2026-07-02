@@ -1,9 +1,11 @@
 import Phaser from "phaser";
 import { TUNING } from "../data/tuning";
+import { gameState } from "../state/GameState";
 
 // Paused-over manual/help overlay. GameScene launches this and pauses itself
 // when the player hits Escape; Escape or the Resume button dismisses it and
-// resumes the game (mirrors the ShopScene overlay pattern).
+// resumes the game (mirrors the ShopScene overlay pattern). The overlay also
+// offers "Main Menu" and "Restart Level" exits.
 export class ManualScene extends Phaser.Scene {
   constructor() {
     super("Manual");
@@ -44,24 +46,51 @@ export class ManualScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    const resume = this.add
-      .text(width / 2, height - 70, "▶  RESUME  (Esc)", {
+    const y = height - 70;
+    this.makeButton(width / 2 - 230, y, "▶  RESUME  (Esc)", "#34d399", () => this.close());
+    this.makeButton(width / 2, y, "↻  RESTART LEVEL", "#fbbf24", () => this.restart());
+    this.makeButton(width / 2 + 230, y, "⏏  MAIN MENU", "#f87171", () => this.toMenu());
+
+    this.input.keyboard?.on("keydown-ESC", () => this.close());
+  }
+
+  private makeButton(x: number, y: number, label: string, bg: string, onClick: () => void) {
+    const btn = this.add
+      .text(x, y, label, {
         fontFamily: "system-ui, sans-serif",
-        fontSize: "24px",
+        fontSize: "22px",
         color: "#0f172a",
-        backgroundColor: "#34d399",
+        backgroundColor: bg,
         fontStyle: "bold",
       })
       .setOrigin(0.5)
       .setPadding(16, 10, 16, 10)
       .setInteractive({ useHandCursor: true });
-
-    resume.on("pointerdown", () => this.close());
-    this.input.keyboard?.on("keydown-ESC", () => this.close());
+    btn.on("pointerdown", onClick);
+    return btn;
   }
 
+  // Dismiss the overlay and resume the paused game.
   private close() {
     this.scene.resume("Game");
+    this.scene.stop();
+  }
+
+  // Restart the run from wave 1 with fresh state.
+  private restart() {
+    gameState.reset();
+    this.scene.stop("HUD");
+    this.scene.stop("Game");
+    this.scene.start("Game");
+    this.scene.launch("HUD");
+    this.scene.stop();
+  }
+
+  // Abandon the run and return to the main menu.
+  private toMenu() {
+    this.scene.stop("HUD");
+    this.scene.stop("Game");
+    this.scene.start("Menu");
     this.scene.stop();
   }
 }
