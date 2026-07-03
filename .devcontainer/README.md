@@ -13,6 +13,13 @@ with Claude Code (via Google Vertex AI) and the gcloud CLI preinstalled.
 Command Palette → **Dev Containers: Reopen in Container**. On create, the container installs
 game dependencies (`cd game && npm ci`).
 
+`game/node_modules` is mounted from a Docker named volume rather than the host, so npm
+work stays on the container's Linux filesystem — fast on WSL, and unaffected by anything
+in `game/node_modules/` on the host. Run all `npm` commands from **inside** the container;
+a host-side `npm install` writes to a directory the container never sees, and (on Windows)
+can leave `.exe` files that would otherwise break the next `npm ci`. If a stale
+`game/node_modules/` exists on the host, it's harmless but can be deleted to reclaim disk.
+
 ## Everyday use
 
 ```bash

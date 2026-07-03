@@ -24,7 +24,7 @@
   },
 
   // Fix volume-mount ownership, then install game deps (same command CI runs).
-  "postCreateCommand": "sudo chown -R node:node /home/node/.claude /home/node/.config/gcloud; cd game && npm ci",
+  "postCreateCommand": "sudo chown -R node:node /home/node/.claude /home/node/.config/gcloud game/node_modules; cd game && npm ci",
 
   // Non-root user (required by Claude Code) whose home holds the persisted config volumes.
   "remoteUser": "node",
@@ -33,6 +33,9 @@
     // Persist Claude Code auth/settings/history across rebuilds.
     "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume",
     // Persist gcloud config + Application Default Credentials across rebuilds.
-    "source=gcloud-config-${devcontainerId},target=/home/node/.config/gcloud,type=volume"
+    "source=gcloud-config-${devcontainerId},target=/home/node/.config/gcloud,type=volume",
+    // Keep node_modules on a Linux-native Docker volume so npm work stays off the
+    // Windows/9p bridge (fast, and immune to host-side installs leaving win32 binaries).
+    "source=game-node-modules-${devcontainerId},target=${containerWorkspaceFolder}/game/node_modules,type=volume"
   ]
 }
