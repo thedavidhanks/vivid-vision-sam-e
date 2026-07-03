@@ -39,7 +39,7 @@ And crucially, it **notifies the owners** — each site's people get told how th
 ### 9:45 AM — What we're building now: the campus starts to wake up
 This is the work I dreamed about in 2026, and in 2031 it's finally *beginning* — real hardware on real buildings, the first nerves of a physical campus learning to feel itself. If the web monitor is the thing I *finished*, this is the thing I'm *just starting*.
 
-We're standing up a **campus-wide sensor network**, and we're doing it the way you build something you intend to last: start small, prove value, earn the next step.
+We're standing up a [**campus-wide sensor network**](https://campuscontrol.rice.edu), and we're doing it the way you build something you intend to last: start small, prove value, earn the next step.
 
 - **Where it started — water.** The first win was unglamorous and perfect: **monitoring water bills across campus.** A few sensors, a clear before/after, a number a CFO understands. That credibility bought everything that came after.
 - **Where it's going now — energy & generation.** We're expanding into **live energy consumption *and* power generation** monitoring, building by building. For the first time Rice can start to see its own metabolism — not everywhere yet, but in more places every month.
