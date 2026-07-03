@@ -22,7 +22,7 @@ export class ShopScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, 0x0b1220, 0.82).setOrigin(0, 0);
 
     this.add
-      .text(width / 2, 70, `Wave ${this.nextWave} cleared!`, {
+      .text(width / 2, 70, `Semester ${this.nextWave} cleared!`, {
         fontFamily: "system-ui, sans-serif",
         fontSize: "34px",
         color: "#fde68a",
@@ -98,7 +98,7 @@ export class ShopScene extends Phaser.Scene {
     }
 
     const start = this.add
-      .text(width / 2, height - 60, `▶  START WAVE ${this.nextWave + 1}`, {
+      .text(width / 2, height - 60, `▶  START SEMESTER ${this.nextWave + 1}`, {
         fontFamily: "system-ui, sans-serif",
         fontSize: "24px",
         color: "#0f172a",

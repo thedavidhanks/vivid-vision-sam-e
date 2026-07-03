@@ -32,7 +32,7 @@ export class ManualScene extends Phaser.Scene {
       "  but lit buildings drain your kWh reserve. Turn them off when idle!",
       "• Water leaks block paths. Click a DRONE and drag it to the leak to fix it.",
       "• People run out of patience if stuck. Lose too many and it's game over.",
-      "• Clear a wave to reach the shop and spend your cash on upgrades.",
+      "• Clear a semester to reach the shop and spend your cash on upgrades.",
       "",
       "You lose when reputation hits 0 — from rage-quits or brownouts.",
     ];

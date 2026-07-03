@@ -41,7 +41,7 @@ export class EndScene extends Phaser.Scene {
         height / 2 - 40,
         this.won
           ? "You kept the owls moving and the lights (mostly) off."
-          : `Reputation ran out on wave ${this.wave}.`,
+          : `Reputation ran out on semester ${this.wave}.`,
         {
           fontFamily: "system-ui, sans-serif",
           fontSize: "20px",

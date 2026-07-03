@@ -179,7 +179,7 @@ export class HUDScene extends Phaser.Scene {
     this.integText.setText(`INTEG ${integ}%`);
     this.integText.setColor(integ > 50 ? "#86efac" : integ > 25 ? "#fbbf24" : "#fca5a5");
 
-    this.cycleText.setText(`CYCLE ${this.gameScene.waveNumber}/${this.gameScene.waveCount}`);
+    this.cycleText.setText(`SEMESTER ${this.gameScene.waveNumber}/${this.gameScene.waveCount}`);
 
     // --- power meter (available = supply − load; full & green = lots free) ---
     const { x, y, w: bw, h: bh } = HUDScene.PWR;

@@ -7,6 +7,7 @@ import { GameScene } from "./scenes/GameScene";
 import { HUDScene } from "./scenes/HUDScene";
 import { ShopScene } from "./scenes/ShopScene";
 import { ManualScene } from "./scenes/ManualScene";
+import { TutorialScene } from "./scenes/TutorialScene";
 import { EndScene } from "./scenes/EndScene";
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
@@ -20,5 +21,5 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   render: { antialias: true, roundPixels: false },
-  scene: [BootScene, PreloadScene, MenuScene, GameScene, HUDScene, ShopScene, ManualScene, EndScene],
+  scene: [BootScene, PreloadScene, MenuScene, GameScene, HUDScene, ShopScene, ManualScene, TutorialScene, EndScene],
 };

@@ -35,6 +35,7 @@ export const WAVES: WaveDef[] = [
       { id: "rayzor", size: "small" },
       { id: "anderson", size: "small" },
     ],
+    startPowered: true, // onboarding: buildings already lit; power isn't taught yet
     leakInterval: 0, // gentle: no leaks in wave 1
   },
   {
@@ -54,7 +55,7 @@ export const WAVES: WaveDef[] = [
       { id: "rayzor", size: "small" },
       { id: "anderson", size: "small" },
     ],
-    leakInterval: 14,
+    leakInterval: 0, // still no leaks: this wave teaches powering buildings on
   },
   {
     id: 3,
@@ -73,7 +74,7 @@ export const WAVES: WaveDef[] = [
       { id: "rayzor", size: "small" },
       { id: "anderson", size: "small" },
     ],
-    leakInterval: 9,
+    leakInterval: 9, // water leaks begin here — the drone tutorial fires this wave
   },
   {
     id: 4,

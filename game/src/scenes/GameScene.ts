@@ -11,6 +11,7 @@ import { Person } from "../entities/Person";
 import { Drone } from "../entities/Drone";
 import { Obstruction } from "../entities/Obstruction";
 import { DrawController } from "../systems/pathDraw";
+import { type TutorialStep } from "./TutorialScene";
 import { computeLoad, stepBattery, canPowerOn, costForSize } from "../systems/power";
 import { payForSatisfiedDelivery, payForRepair } from "../systems/economy";
 import { walkwaySpeedFactor } from "../systems/walkways";
@@ -250,7 +251,7 @@ export class GameScene extends Phaser.Scene {
   private wireInput() {
     // Escape pauses the game and pops up the manual overlay.
     this.input.keyboard?.on("keydown-ESC", () => {
-      if (this.ended || this.betweenWaves || this.scene.isActive("Manual")) return;
+      if (this.ended || this.betweenWaves || this.scene.isActive("Manual") || this.scene.isActive("Tutorial")) return;
       this.scene.launch("Manual");
       this.scene.pause();
     });
@@ -305,18 +306,30 @@ export class GameScene extends Phaser.Scene {
     const wave = WAVES[index];
     gameState.waveIndex = index;
 
+    // Onboarding: a modal tutorial pops up (paused) at the start of levels 1-3,
+    // every run. "START" resumes the game.
+    const tut: TutorialStep | null =
+      index === 0 ? "route" : index === 1 ? "power" : index === 2 ? "drone" : null;
+    if (tut) {
+      this.scene.launch("Tutorial", { step: tut });
+      this.scene.pause();
+    }
+
     // factory supply for this wave (+ grid upgrade); battery starts empty.
     const hasGrid = gameState.upgrades.has("grid");
     gameState.supply = wave.supply + (hasGrid ? TUNING.power.gridSupplyBonus : 0);
     gameState.battery = { capacity: gameState.batteryCapacity, charge: 0 };
 
     // activate this wave's first `activeBuildings` (with sizes); the rest sit on
-    // the map greyed-out. All start OFF.
+    // the map greyed-out. All start OFF unless the wave opts into startPowered.
     const active = wave.buildings.slice(0, wave.activeBuildings);
     const sizeById = new Map(active.map((wb) => [wb.id, wb.size]));
     for (const b of this.buildings) {
       const size = sizeById.get(b.def.id);
       b.setActive(size !== undefined, size ?? "small");
+      // Onboarding wave: buildings start lit so routing can be learned before the
+      // power mechanic. Later waves start OFF (the default) so it must be taught.
+      if (wave.startPowered && b.active) b.toggle();
     }
     this.activeBuildingIds = active.map((wb) => wb.id);
     this.currentLoad = 0;
@@ -332,7 +345,7 @@ export class GameScene extends Phaser.Scene {
     this.betweenWaves = false;
 
     EventBus.emit(EV.waveChanged, index + 1);
-    this.flashBanner(`WAVE ${index + 1}`);
+    this.flashBanner(`SEMESTER ${index + 1}`);
   }
 
   private spawnPerson() {
