@@ -9,22 +9,22 @@ I'm not normally a morning person. But on days I get to work my bouldering proje
 This morning I have company. My five-year-old daughter is in forest school, where she's deep into all things outdoors — and somehow that turned into her wanting to come to the climbing gym with me today. In a five-year-old way "looking for bugs under rocks" == "climbing indoors with dad".  I don't quite get it...but I accept it gladly. We go exercise (or, for her, play) together, then split our favorite apple fritter for breakfast. It's the kind of morning I couldn't have pictured in 2026.
 
 ### 7:15 School is important.  Go!
-Leah and I drive out to forest school for drop-off.  We talk about the day she's going to have and dinner with friends tonight.  She runs off to find her people with an oversized backpack carrying all the stuff she doesn't need.  The heavy fog or the pollen must be causing my eyes to be watery.  My heart smiles as I drive off to "the office"
+Leah and I drive out to forest school for drop-off.  We talk about the day she's going to have and dinner with friends tonight.  We talk about her final days of forest school before she starts Kindergarden in the fall, thne she runs off to find her people with an oversized backpack carrying all the stuff she doesn't need.  The heavy fog or the pollen must be causing my eyes to be watery.  My heart smiles as I drive off to "the office"
 
 ### 7:30 AM — Slow coffee, sharp mind
-Coffee, no rush. I spend twenty minutes reading — not email, but the field. Keeping up with computer science is a daily ritual, not a panic. New deployment patterns, what's happening at the edge, the latest in how we orchestrate fleets of devices. I filter through articles, going deep on the one thing that matters this week — and lately, that one thing usually finds its way into a prototype on my bench by Friday. I'm never the last person in the room to hear about something. Often I'm the first.
+Coffee, no rush. I spend twenty minutes reading — not email, but the field. Keeping up with computer science is a daily ritual, not a panic. New deployment patterns, what's happening at the edge, the latest in how we orchestrate fleets of devices. I filter through articles, going deep on the one thing that matters this week — and lately, that one thing usually finds its way into a prototype on my bench by Friday. I'm never the last person in the room to hear about something. I'm often the first.
 
 ### 8:30 AM — The work begins, and I'm the principal
 I sit down as **Principal Engineer for Physical & Edge Infrastructure** at Rice. That title means something specific: when the hard infrastructure-deployment questions come up — the ones that span software, hardware, and the messy physical campus — they come to me. I'm the expert. The pivot I made to Computer Science in 2021 is complete; I didn't just join the field, I reached the top of a corner of it. And now I get to point that expertise at a blank canvas.
 
-My morning standup is short. I lead a small, capable team. I'm not buried in tickets — I set direction, I unblock, I design the systems others build on. The one thing that *doesn't* really come up anymore is the campus web monitor — it's done, it just runs itself, a row of green checks nobody has to discuss. That's exactly why standup can be short: the finished thing frees us to spend the whole meeting on the things we're still figuring out.
+My morning standup is short. I lead a small, capable team. I'm not buried in tickets — I set direction, I unblock, I design the systems others build on. The one thing that *doesn't* really come up anymore is the campus web monitor — it's done, it just runs itself, a row of green checks nobody has to discuss. That's exactly why standup can be short: the finished thing frees us to spend most of the meeting on the things we're still figuring out.
 
 ### 9:00 AM — What's already built: taking the pulse of the web
 Start with the part that's actually *finished* — the one piece of the puzzle that's mature. Over the **last five years** I built it out, brick by brick, and in 2031 it's in **easy mode**: the sprawl of *websites* Rice runs is no longer a fire to fight, it's a system that runs itself and just tells me when to look. It's the proof-of-concept for everything I'm still starting — evidence that a tangled mess can be made to behave.
 
 For years the dream was consolidation: get everything onto one platform and finally tame it. Early on I **gave that up — on purpose.** GCP is not the answer. Neither is AWS. Neither is Azure. **There is no ONE answer.** It's called the ***WEB*** for a reason — pretending you can pull it all under one roof is how you waste a decade. So instead of fighting the shape of the thing, I laid out the **infrastructure and the governance** to live with it. The `*.rice.edu` domain breathes on its own now — it **grows** when there's demand and **shrinks** when sites age out or policy enforcement retires them — and the framework just absorbs the change.
 
-Instead, I've brought **all of campus's web needs into one place where they can be *monitored*** — not owned, *watched.* The system **takes the pulse** of the entire web estate and **advises campus on how to prepare and react.** It watches:
+Instead, I've brought **all of campus's web needs into one place where they can be *monitored*** — not owned, *watched.* The system **takes the pulse** of the entire rice.edu web domain and **advises campus on how to prepare and react.** It watches:
 
 - **Uptime / downtime** — is it even up?
 - **SEO** — can anyone find it?
@@ -53,7 +53,7 @@ The fun part of being *early* is that the horizon is still visible. I spend part
 
 The flashiest of them is **AR wayfinding** and **educator-glasses plugins** — but that's *experiment*, not product. We're poking at it, building throwaway prototypes, learning what's real. 2031 is too early to pretend it's deployed. But I can see the shape of it from here, and we're laying the rails it'll one day run on.
 
-Stack it all up and the trajectory is obvious. The web monitor proved the campus could watch itself; the sensor network is teaching it to *feel*; AR will eventually let it *speak* to the people walking through it. A campus that senses itself and advises its keepers on how to react, and from here in the genesis year I can finally trace the line to it. [*Is this how Skynet starts?*](http://is-this-how-skynet-starts.rice.edu/)
+Stack it all up and the trajectory is obvious. The web monitor proved the campus could watch itself; the sensor network is teaching it to *feel*; AR will eventually let it *speak* to the people walking through it. A campus that senses itself and advises its keepers on how to react. [*Is this how Skynet starts?*](http://is-this-how-skynet-starts.rice.edu/)
 
 ### 12:30 PM — Lunch away from the screen
 A real break. No sad-desk lunch. Some days I'm out of the house entirely — the remote freedom means a coffee shop, a bike trail, a different city for a week. The flexibility I wanted isn't a perk anymore; it's the texture of my life.
