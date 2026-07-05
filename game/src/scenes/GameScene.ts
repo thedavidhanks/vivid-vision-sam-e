@@ -346,6 +346,9 @@ export class GameScene extends Phaser.Scene {
 
     EventBus.emit(EV.waveChanged, index + 1);
     this.flashBanner(`SEMESTER ${index + 1}`);
+    // No tutorial this wave → the player has control now, so class is in session.
+    // Tutorial waves defer this until the START button (TutorialScene.close()).
+    if (!tut) EventBus.emit(EV.classInSession);
   }
 
   private spawnPerson(): boolean {

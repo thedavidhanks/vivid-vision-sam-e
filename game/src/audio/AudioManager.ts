@@ -52,7 +52,7 @@ class AudioManager {
   }
 
   private subscribe(): void {
-    EventBus.on(EV.waveChanged, this.onWaveChanged, this);
+    EventBus.on(EV.classInSession, this.onClassInSession, this);
     EventBus.on(EV.personDelivered, this.onDelivered, this);
     EventBus.on(EV.personRageQuit, this.onRageQuit, this);
     EventBus.on(EV.waveCleared, this.onWaveCleared, this);
@@ -68,7 +68,8 @@ class AudioManager {
     fn(this.ctx, this.sfxGain, this.ctx.currentTime + 0.01);
   }
 
-  private onWaveChanged = () => {
+  // The player has control — ring the class bell and (once) kick off the music.
+  private onClassInSession = () => {
     this.ensureMusic();
     this.play(bell);
   };

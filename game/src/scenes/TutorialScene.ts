@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { TUNING } from "../data/tuning";
 import { CAMPUS } from "../data/campus";
+import { EventBus } from "../state/EventBus";
+import { EV } from "../state/events";
 
 // Modal onboarding overlay. GameScene launches this at the start of levels 1-3
 // and pauses itself; the "START" button resumes the game and stops the overlay
@@ -301,6 +303,8 @@ export class TutorialScene extends Phaser.Scene {
   }
 
   private close() {
+    // The player is starting the wave now — ring the class bell.
+    EventBus.emit(EV.classInSession);
     this.scene.resume("Game");
     this.scene.stop();
   }
