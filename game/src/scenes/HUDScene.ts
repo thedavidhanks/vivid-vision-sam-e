@@ -3,6 +3,7 @@ import { TUNING } from "../data/tuning";
 import { gameState } from "../state/GameState";
 import { EventBus } from "../state/EventBus";
 import { EV } from "../state/events";
+import { isMuted, toggleMute } from "../audio/AudioManager";
 import type { GameScene } from "./GameScene";
 import type { PersonKind } from "../data/types";
 
@@ -31,6 +32,8 @@ export class HUDScene extends Phaser.Scene {
   private owlIcons: Phaser.GameObjects.Text[] = [];
   private owlResolved = 0; // how many glyphs have been flipped this wave
   private owlWave = -1; // wave the current roster was built for
+
+  private muteBtn!: Phaser.GameObjects.Text; // 🔊 / 🔇 toggle (bottom-right)
 
   constructor() {
     super("HUD");
@@ -70,6 +73,21 @@ export class HUDScene extends Phaser.Scene {
     this.bar = this.add.graphics();
 
     this.buildCrt();
+
+    // Mute toggle — bottom-right, above the CRT overlay so it stays crisp and
+    // clickable. Kept in sync with the "M" keyboard shortcut via update().
+    this.muteBtn = this.add
+      .text(w - 10, TUNING.board.height - 10, isMuted() ? "🔇" : "🔊", {
+        fontFamily: "sans-serif",
+        fontSize: "22px",
+      })
+      .setOrigin(1, 1)
+      .setDepth(950)
+      .setInteractive({ useHandCursor: true });
+    this.muteBtn.on("pointerdown", () => {
+      toggleMute();
+      this.muteBtn.setText(isMuted() ? "🔇" : "🔊");
+    });
 
     // Blink the ● status dot; update() reads dotOn to compose the label.
     this.blinkTimer = this.time.addEvent({
@@ -260,6 +278,10 @@ export class HUDScene extends Phaser.Scene {
 
     this.availText.setText(brownout ? "BROWNOUT" : `${Math.round(available)}`);
     this.availText.setColor(brownout ? "#fca5a5" : "#fde047");
+
+    // Keep the mute glyph in sync when toggled via the "M" keyboard shortcut.
+    const wantGlyph = isMuted() ? "🔇" : "🔊";
+    if (this.muteBtn.text !== wantGlyph) this.muteBtn.setText(wantGlyph);
 
     // --- CRT flicker: smooth sine wobble around the base alpha ---
     const flick = crt.flickerBaseAlpha + crt.flickerAmplitude * Math.sin(this.time.now * crt.flickerSpeed);

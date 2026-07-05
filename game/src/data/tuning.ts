@@ -9,6 +9,19 @@
 export const TUNING = {
   board: { width: 960, height: 600 },
 
+  // ---- AUDIO ---------------------------------------------------------------
+  // All sound is synthesized at runtime via the Web Audio API (no asset files),
+  // mirroring the procedurally-generated art. See src/audio/. Volumes are 0..1;
+  // master gates everything, sfx/music scale their own sub-mix.
+  audio: {
+    enabled: true, // master kill-switch; false = AudioManager is a no-op
+    masterVolume: 0.5, // overall level (also the "unmuted" level)
+    sfxVolume: 0.8, // sound-effect sub-mix level
+    musicVolume: 0.3, // fight-song loop sub-mix level (sits under SFX)
+    startMuted: false, // begin the run muted
+    muteKey: "m", // keyboard shortcut to toggle mute
+  },
+
   // ---- DEFAULT SPEEDS (px/sec) ---------------------------------------------
   speed: {
     owl: 80, // professors (owl + grad cap) — slower, more deliberate pace
