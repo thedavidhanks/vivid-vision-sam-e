@@ -14,7 +14,7 @@ import type { PersonKind } from "../data/types";
 export class HUDScene extends Phaser.Scene {
   private gameScene!: GameScene;
   private statusText!: Phaser.GameObjects.Text;
-  private crText!: Phaser.GameObjects.Text;
+  private moneyText!: Phaser.GameObjects.Text;
   private integText!: Phaser.GameObjects.Text;
   private cycleText!: Phaser.GameObjects.Text;
   private pwrLabel!: Phaser.GameObjects.Text;
@@ -22,6 +22,8 @@ export class HUDScene extends Phaser.Scene {
   private bar!: Phaser.GameObjects.Graphics;
   private flicker!: Phaser.GameObjects.Rectangle;
   private flashT = 0; // ms remaining on the power-bar flash (set on a toggle)
+  private integShakeT = 0; // ms remaining on the integrity shake/flash (set on a drop)
+  private prevRep = TUNING.reputation.start; // last frame's reputation, to detect drops
   private dotOn = true; // blink state of the ● status indicator
   private blinkTimer?: Phaser.Time.TimerEvent;
 
@@ -29,9 +31,6 @@ export class HUDScene extends Phaser.Scene {
   private owlIcons: Phaser.GameObjects.Text[] = [];
   private owlResolved = 0; // how many glyphs have been flipped this wave
   private owlWave = -1; // wave the current roster was built for
-
-  // Centered, enlarged power meter (shared with the toggle-flash + battery bar).
-  private static readonly PWR = { x: 400, y: 8, w: 180, h: 14 };
 
   constructor() {
     super("HUD");
@@ -43,6 +42,8 @@ export class HUDScene extends Phaser.Scene {
     const hud = TUNING.fx.hud;
     this.dotOn = true;
     this.flashT = 0;
+    this.integShakeT = 0;
+    this.prevRep = gameState.reputation;
     this.owlIcons = [];
     this.owlResolved = 0;
     this.owlWave = -1;
@@ -51,18 +52,20 @@ export class HUDScene extends Phaser.Scene {
     this.add.rectangle(0, 0, w, 52, 0x0b1220, 0.85).setOrigin(0, 0);
     this.add.rectangle(0, 52, w, 1, hud.accent, 0.5).setOrigin(0, 0);
 
-    const readout = (x: number, color: string, origin = 0) =>
+    const readout = (x: number, y: number, color: string, origin = 0, size = 15) =>
       this.add
-        .text(x, 8, "", { fontFamily: "monospace", fontSize: "15px", color })
+        .text(x, y, "", { fontFamily: "monospace", fontSize: `${size}px`, color })
         .setOrigin(origin, 0);
 
-    this.statusText = readout(12, hud.online);
-    this.crText = readout(150, "#fde68a");
-    this.integText = readout(250, hud.online);
-    this.pwrLabel = readout(360, "#e2e8f0");
-    this.pwrLabel.setText("PWR");
-    this.availText = readout(590, "#e2e8f0");
-    this.cycleText = readout(w - 12, "#93c5fd", 1);
+    this.statusText = readout(12, 8, hud.online);
+    this.moneyText = readout(160, 8, "#fde68a");
+    // Integrity is the centerpiece: a bold, centered label above its bar.
+    this.integText = readout(hud.integ.centerX, hud.integ.labelY, hud.online, 0.5, 14);
+    // Power lives on the left of the second tier: a bolt icon + small yellow bar.
+    this.pwrLabel = readout(hud.pwr.labelX, hud.pwr.textY, "#fde047", 0, 15);
+    this.pwrLabel.setText(hud.pwr.icon);
+    this.availText = readout(hud.pwr.availX, hud.pwr.textY, "#fde047", 0, 13);
+    this.cycleText = readout(w - 12, 8, "#93c5fd", 1);
 
     this.bar = this.add.graphics();
 
@@ -114,9 +117,12 @@ export class HUDScene extends Phaser.Scene {
     this.owlIcons = [];
     this.owlResolved = 0;
     for (let i = 0; i < total; i++) {
+      // Right-anchored: the last glyph sits at owlRightX; earlier ones step left,
+      // so a bigger wave grows toward center instead of clipping the screen edge.
+      const gx = hud.owlRightX - (total - 1 - i) * hud.owlStep;
       this.owlIcons.push(
         this.add
-          .text(hud.owlStartX + i * hud.owlStep, hud.owlY, hud.owlPending, {
+          .text(gx, hud.owlY, hud.owlPending, {
             fontFamily: "sans-serif",
             fontSize: `${hud.owlSize}px`,
           })
@@ -168,34 +174,73 @@ export class HUDScene extends Phaser.Scene {
       this.buildOwlRoster(this.gameScene.expectedOwls);
     }
 
-    // --- status + telemetry readouts ---
+    // --- status readout: dot color tracks available power; word flips OFFLINE ---
+    // green when power is comfortable, yellow when low, red when critical/off.
+    const pwrColor = brownout
+      ? hud.fault
+      : frac > hud.pwrWarnFrac
+        ? hud.online
+        : frac > hud.pwrLowFrac
+          ? hud.warn
+          : hud.fault;
     const dot = this.dotOn ? "●" : " ";
-    this.statusText.setText(`SAM-e ${dot} ${brownout ? "FAULT" : "ONLINE"}`);
-    this.statusText.setColor(brownout ? hud.fault : hud.online);
+    // OFFLINE (brownout) blinks the whole word for alarm; ONLINE stays steady.
+    const word = brownout ? (this.dotOn ? "OFFLINE" : "       ") : "ONLINE";
+    this.statusText.setText(`SAM-e ${dot} ${word}`);
+    this.statusText.setColor(pwrColor);
 
-    this.crText.setText(`CR ${Math.floor(gameState.money)}`);
+    this.moneyText.setText(`$ ${Math.floor(gameState.money)}`);
 
-    const integ = Math.min(100, Math.max(0, Math.ceil(gameState.reputation)));
-    this.integText.setText(`INTEG ${integ}%`);
-    this.integText.setColor(integ > 50 ? "#86efac" : integ > 25 ? "#fbbf24" : "#fca5a5");
-
-    this.cycleText.setText(`SEMESTER ${this.gameScene.waveNumber}/${this.gameScene.waveCount}`);
-
-    // --- power meter (available = supply − load; full & green = lots free) ---
-    const { x, y, w: bw, h: bh } = HUDScene.PWR;
+    const delta = this.sys.game.loop.delta;
     this.bar.clear();
-    this.bar.fillStyle(0x1e293b, 1);
+
+    // --- integrity meter: the centered centerpiece; shakes + red-flashes on a drop ---
+    const ig = hud.integ;
+    const integ = Math.min(100, Math.max(0, Math.ceil(gameState.reputation)));
+    // Any drop in reputation (rage-quit, brownout drain) kicks off the shake.
+    if (gameState.reputation < this.prevRep - 0.01) this.integShakeT = ig.shakeMs;
+    this.prevRep = gameState.reputation;
+
+    let sx = 0;
+    let sy = 0;
+    if (this.integShakeT > 0) {
+      this.integShakeT = Math.max(0, this.integShakeT - delta);
+      const amp = ig.shakeAmp * (this.integShakeT / ig.shakeMs);
+      sx = (Math.random() * 2 - 1) * amp;
+      sy = (Math.random() * 2 - 1) * amp;
+    }
+
+    const igFrac = integ / 100;
+    const igCol = integ > 50 ? ig.colorGood : integ > 25 ? ig.colorWarn : ig.colorBad;
+    this.bar.fillStyle(ig.trackColor, 1);
+    this.bar.fillRect(ig.x + sx, ig.y + sy, ig.w, ig.h);
+    this.bar.fillStyle(igCol, 1);
+    this.bar.fillRect(ig.x + sx, ig.y + sy, ig.w * igFrac, ig.h);
+    this.bar.lineStyle(1, 0x475569, 1);
+    this.bar.strokeRect(ig.x + sx, ig.y + sy, ig.w, ig.h);
+    if (this.integShakeT > 0) {
+      const a = ig.flashAlpha * (this.integShakeT / ig.shakeMs);
+      this.bar.fillStyle(ig.flashColor, a);
+      this.bar.fillRect(ig.x + sx, ig.y + sy, ig.w, ig.h);
+    }
+    this.integText.setText("INTEGRITY");
+    this.integText.setColor(integ > 50 ? "#86efac" : integ > 25 ? "#fbbf24" : "#fca5a5");
+    this.integText.setPosition(ig.centerX + sx, ig.labelY + sy);
+
+    this.cycleText.setText(`SEMESTER ${this.gameScene.waveNumber}`);
+
+    // --- power meter: small, static-yellow bar (distinct from integrity) ---
+    const { x, y, w: bw, h: bh, color: pwrCol } = hud.pwr;
+    this.bar.fillStyle(hud.pwr.trackColor, 1);
     this.bar.fillRect(x, y, bw, bh);
-    const col =
-      brownout || frac <= 0 ? 0xef4444 : frac > 0.4 ? 0x22c55e : frac > 0.2 ? 0xf59e0b : 0xef4444;
-    this.bar.fillStyle(col, 1);
+    this.bar.fillStyle(pwrCol, 1);
     this.bar.fillRect(x, y, bw * frac, bh);
     this.bar.lineStyle(1, 0x475569, 1);
     this.bar.strokeRect(x, y, bw, bh);
 
     // Flash overlay on toggle: a bright wash + thick stroke that fades out.
     if (this.flashT > 0) {
-      this.flashT = Math.max(0, this.flashT - this.sys.game.loop.delta);
+      this.flashT = Math.max(0, this.flashT - delta);
       const a = this.flashT / TUNING.fx.hudFlashMs;
       this.bar.fillStyle(0xf8fafc, 0.5 * a);
       this.bar.fillRect(x, y, bw, bh);
@@ -214,7 +259,7 @@ export class HUDScene extends Phaser.Scene {
     }
 
     this.availText.setText(brownout ? "BROWNOUT" : `${Math.round(available)}`);
-    this.availText.setColor(brownout ? "#fca5a5" : "#e2e8f0");
+    this.availText.setColor(brownout ? "#fca5a5" : "#fde047");
 
     // --- CRT flicker: smooth sine wobble around the base alpha ---
     const flick = crt.flickerBaseAlpha + crt.flickerAmplitude * Math.sin(this.time.now * crt.flickerSpeed);

@@ -44,10 +44,23 @@ export class PreloadScene extends Phaser.Scene {
             g.generateTexture(`${kind}_${b.id}_${view}_${frame}`, w, h);
             g.destroy();
           }
+          // Extra standing frame with raised wings — the "up" pose of the flap cycle.
+          const gf = this.add.graphics();
+          drawOwl(gf, { kind, view, frame: 0, w, h, garment, wingsUp: true });
+          gf.generateTexture(`${kind}_${b.id}_${view}_flap`, w, h);
+          gf.destroy();
+
           this.anims.create({
             key: `${kind}_${b.id}_walk_${dir}`,
             frames: [{ key: `${kind}_${b.id}_${view}_0` }, { key: `${kind}_${b.id}_${view}_1` }],
             frameRate: TUNING.person.walkFrameRate,
+            repeat: -1,
+          });
+          // Standing flap (wings down ↔ up), played while the owl waits/stops.
+          this.anims.create({
+            key: `${kind}_${b.id}_flap_${view}`,
+            frames: [{ key: `${kind}_${b.id}_${view}_0` }, { key: `${kind}_${b.id}_${view}_flap` }],
+            frameRate: TUNING.person.flapFrameRate,
             repeat: -1,
           });
         }

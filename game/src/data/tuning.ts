@@ -61,6 +61,14 @@ export const TUNING = {
     patience: 18, // seconds of patience while stuck/waiting before leaving
     radius: 15,
     walkFrameRate: 7, // fps of the 2-frame walk cycle while moving
+    flapFrameRate: 5, // fps of the 2-frame wing-flap played while stopped/waiting
+    // Spawn "needs you" cue: a fresh owl shows a bobbing "!" until routed. The
+    // patience clock is delayed by a per-wave grace time (WaveDef.spawnGrace).
+    attention: {
+      cycleMs: 420, // duration of one full "!" bob (up + back)
+      markerOffsetY: 34, // px the "!" sits above the owl's center
+      markerBob: 6, // px the "!" bobs up/down
+    },
   },
 
   // ---- ECONOMY -------------------------------------------------------------
@@ -88,9 +96,9 @@ export const TUNING = {
   // ---- FX (feedback for spending power) ------------------------------------
   // Purely visual; sells "powering a building draws from the shared factory."
   fx: {
-    // Screen anchor the power bolt springs from — sits under the centered HUD
-    // power bar (bar at x=400,y=8,w=180). GameScene & HUD share screen coords.
-    powerSource: { x: 490, y: 26 },
+    // Screen anchor the power bolt springs from — sits at the relocated HUD
+    // power bar (see fx.hud.pwr, left side). GameScene & HUD share screen coords.
+    powerSource: { x: 95, y: 38 },
     // Lightning bolt fired when a building is powered ON.
     zap: {
       color: 0x7dd3fc, // electric blue
@@ -114,11 +122,18 @@ export const TUNING = {
     // SAM-e's console HUD chrome — phosphor-green accents + status colors.
     hud: {
       accent: 0x86efac, // phosphor green used for framing/dividers
-      online: "#86efac", // status dot + label when healthy
-      fault: "#fca5a5", // status dot + label during a brownout
+      online: "#86efac", // status dot + label when power is healthy
+      warn: "#fbbf24", // status dot + label when power runs low
+      fault: "#fca5a5", // status dot + label when power is critical / OFFLINE
       dotBlinkMs: 600, // blink cadence of the ● status indicator
-      // Owl roster: one glyph per expected owl this wave. Starts as a faded
-      // outline; flips to a full owl/owlet on delivery or a frown on rage-quit.
+      // Status dot reflects available-power fraction: green above warnFrac,
+      // yellow above lowFrac, red below (or when browned out / OFFLINE).
+      pwrWarnFrac: 0.4, // available/supply above this = green
+      pwrLowFrac: 0.2, // above this = yellow; below = red
+      // Owl roster: one glyph per expected owl this wave, on the right of the
+      // second HUD tier. Right-anchored (grows leftward as the wave is larger)
+      // so it never clips the screen edge. Starts as a faded outline; flips to a
+      // full owl/owlet on delivery or a frown on rage-quit.
       owlPending: "🦉", // faded placeholder for an owl not yet resolved
       owlPendingAlpha: 0.22,
       owlProfessor: "🦉", // delivered professor
@@ -126,8 +141,42 @@ export const TUNING = {
       owlFail: "🙁", // rage-quit / lost
       owlSize: 16, // px font size of each roster glyph
       owlStep: 20, // px between glyphs
-      owlStartX: 14, // left edge of the roster row
+      owlRightX: 934, // left edge of the rightmost (last) glyph; roster grows left
       owlY: 32, // baseline row for the roster (second HUD tier)
+
+      // Integrity meter — the HUD's centerpiece (you lose the game at 0%). A big
+      // centered bar under a centered label; it shakes + red-flashes on any drop.
+      integ: {
+        x: 350, // left edge of the centered bar (board center 480 − w/2)
+        y: 22, // top of the bar (sits under the centered label)
+        w: 260, // bar width
+        h: 18, // bar height (taller than power = more prominent)
+        labelY: 4, // baseline of the centered "INTEGRITY xx%" label
+        centerX: 480, // horizontal center (board width / 2) for the label
+        colorGood: 0x86efac, // > 50%
+        colorWarn: 0xfbbf24, // > 25%
+        colorBad: 0xef4444, // <= 25%
+        trackColor: 0x1e293b, // empty-bar background
+        shakeMs: 450, // duration of the shake after an integrity drop
+        shakeAmp: 5, // px peak jitter (decays over shakeMs)
+        flashColor: 0xef4444, // red wash overlaid on the bar while shaking
+        flashAlpha: 0.5, // peak alpha of that wash
+      },
+
+      // Power meter — a small, static-yellow bar on the LEFT of the second HUD
+      // tier (swapped with the owl roster). Labeled with a lightning-bolt icon.
+      pwr: {
+        icon: "⚡", // bolt glyph shown in place of a "PWR" label
+        x: 40, // left edge of the bar (right of the bolt icon)
+        y: 34, // top of the bar (second HUD tier, left side)
+        w: 110, // bar width
+        h: 8, // bar height (smaller than Integrity)
+        color: 0xfde047, // static yellow — never changes with load
+        trackColor: 0x1e293b, // empty-bar background
+        labelX: 14, // bolt-icon x (left-aligned, left of the bar)
+        availX: 158, // available-power readout x (right of the bar)
+        textY: 32, // baseline for the bolt icon + avail readout
+      },
     },
     // Subtle CRT screen effect drawn over the whole board (in the HUD scene).
     // Sells "you're looking at SAM-e's monitor." Keep alphas low = readable.

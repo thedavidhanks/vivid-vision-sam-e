@@ -138,9 +138,14 @@ export const CAMPUS: CampusDef = {
   // Hidden spawn markers from the SVG (green "Spawn" shapes). People also spawn
   // at building doors — see GameScene. None of these are drawn.
   spawns: [
-    { id: "n-left", x: 80, y: ty(10) },
-    { id: "n-mid-left", x: 460, y: ty(10) },
-    { id: "n-mid-right", x: 540, y: ty(10) },
+    // North spawns sit below the HUD bar (y=0..53). A professor owl sprite is
+    // 48×60 with a centered origin, so its center must be ≥ ~83 to keep the top
+    // of the sprite clear of the HUD; ty(42) ≈ 87 leaves a small margin. Without
+    // this, owls entering at the top edge appear half-hidden behind the HUD and
+    // are hard to spot.
+    { id: "n-left", x: 80, y: ty(42) },
+    { id: "n-mid-left", x: 460, y: ty(42) },
+    { id: "n-mid-right", x: 540, y: ty(42) },
     { id: "s-left", x: 80, y: ty(590) },
     { id: "s-mid-left", x: 460, y: ty(590) },
     { id: "s-mid-right", x: 540, y: ty(590) },

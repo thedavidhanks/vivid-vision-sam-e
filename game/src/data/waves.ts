@@ -37,6 +37,7 @@ export const WAVES: WaveDef[] = [
     ],
     startPowered: true, // onboarding: buildings already lit; power isn't taught yet
     leakInterval: 0, // gentle: no leaks in wave 1
+    spawnGrace: 8, // generous grace: plenty of time to notice each new owl
   },
   {
     id: 2,
@@ -56,6 +57,7 @@ export const WAVES: WaveDef[] = [
       { id: "anderson", size: "small" },
     ],
     leakInterval: 0, // still no leaks: this wave teaches powering buildings on
+    spawnGrace: 7,
   },
   {
     id: 3,
@@ -75,6 +77,7 @@ export const WAVES: WaveDef[] = [
       { id: "anderson", size: "small" },
     ],
     leakInterval: 9, // water leaks begin here — the drone tutorial fires this wave
+    spawnGrace: 6,
   },
   {
     id: 4,
@@ -94,6 +97,7 @@ export const WAVES: WaveDef[] = [
       { id: "sewall", size: "small" },
     ],
     leakInterval: 8,
+    spawnGrace: 5,
   },
   {
     id: 5,
@@ -113,6 +117,7 @@ export const WAVES: WaveDef[] = [
       { id: "sewall", size: "small" },
     ],
     leakInterval: 7,
+    spawnGrace: 4,
   },
   {
     id: 6,
@@ -132,6 +137,7 @@ export const WAVES: WaveDef[] = [
       { id: "sewall", size: "small" },
     ],
     leakInterval: 6,
+    spawnGrace: 3,
   },
   {
     id: 7,
@@ -151,6 +157,7 @@ export const WAVES: WaveDef[] = [
       { id: "sewall", size: "medium" },
     ],
     leakInterval: 5,
+    spawnGrace: 2,
   },
   {
     id: 8,
@@ -170,5 +177,6 @@ export const WAVES: WaveDef[] = [
       { id: "sewall", size: "large" },
     ],
     leakInterval: 5,
+    spawnGrace: 1, // finale: almost no grace — react instantly
   },
 ];

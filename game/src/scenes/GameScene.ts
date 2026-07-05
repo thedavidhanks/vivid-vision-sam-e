@@ -348,9 +348,22 @@ export class GameScene extends Phaser.Scene {
     this.flashBanner(`SEMESTER ${index + 1}`);
   }
 
-  private spawnPerson() {
+  private spawnPerson(): boolean {
     const wave = WAVES[gameState.waveIndex];
-    const spawn = Phaser.Utils.Array.GetRandom(this.activeSpawnPoints);
+    // Skip spawn points still occupied by an owl the player hasn't routed yet
+    // (a "waiting" owl sits on its spawn coordinate), so we never stack two
+    // unmoved owls on the same spot. If every active point is occupied, hold off
+    // and try again shortly rather than pile on.
+    const free = this.activeSpawnPoints.filter(
+      (p) =>
+        !this.people.some(
+          (person) =>
+            person.state === "waiting" &&
+            Phaser.Math.Distance.Between(person.pos.x, person.pos.y, p.x, p.y) < TUNING.person.radius,
+        ),
+    );
+    if (free.length === 0) return false;
+    const spawn = Phaser.Utils.Array.GetRandom(free);
     // Don't route a person to the building whose door they spawned at.
     let choices = this.activeBuildingIds;
     if (spawn.buildingId) {
@@ -360,10 +373,11 @@ export class GameScene extends Phaser.Scene {
     const destId = Phaser.Utils.Array.GetRandom(choices);
     const dest = this.buildingById.get(destId)!.def;
     const kind: PersonKind = Math.random() < wave.professorRatio ? "professor" : "student";
-    const person = new Person(this, spawn.x, spawn.y, kind, dest.id);
+    const person = new Person(this, spawn.x, spawn.y, kind, dest.id, wave.spawnGrace);
     this.people.push(person);
     this.personColor.set(person, PATH_COLORS[this.colorIdx++ % PATH_COLORS.length]);
     this.spawnedCount++;
+    return true;
   }
 
   private spawnLeak() {
@@ -473,7 +487,13 @@ export class GameScene extends Phaser.Scene {
         this.advance(person, speed * hazard * dt);
       } else if (person.state === "waiting" || person.state === "atDoor") {
         person.idle(); // stand still (facing last direction) while stuck/waiting
-        person.patience -= dt;
+        // Fresh owls get a per-wave grace period (spawn cue) before the clock starts.
+        if (person.clockRunning) {
+          person.patience -= dt;
+        } else {
+          person.graceRemaining -= dt;
+          if (person.graceRemaining <= 0) person.clockRunning = true;
+        }
         if (person.state === "atDoor") {
           const b = this.buildingById.get(person.destId)!;
           if (b.accepts(this.brownout)) this.deliver(person);
@@ -554,8 +574,9 @@ export class GameScene extends Phaser.Scene {
     if (this.spawnedCount < this.waveTotal) {
       this.spawnTimer -= dt;
       if (this.spawnTimer <= 0) {
-        this.spawnPerson();
-        this.spawnTimer = WAVES[gameState.waveIndex].spawnInterval;
+        // If the chosen spawn spots are all still occupied by unrouted owls,
+        // spawnPerson defers — retry soon instead of burning a full interval.
+        this.spawnTimer = this.spawnPerson() ? WAVES[gameState.waveIndex].spawnInterval : 0.25;
       }
     }
     this.leakTimer -= dt;

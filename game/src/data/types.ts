@@ -77,6 +77,8 @@ export interface WaveDef {
   // the rest stay on the map greyed-out). Clamped to buildings.length.
   buildings: WaveBuildingDef[]; // candidate buildings + sizes, most-demanding first
   leakInterval: number; // seconds between leaks (0 = no leaks)
+  spawnGrace: number; // seconds a fresh owl waits (showing its "needs you" cue) before
+  // its patience clock starts — shrinks with difficulty. Routing the owl starts it early.
   startPowered?: boolean; // if true, active buildings begin the wave already ON (used
   // for the level-1 onboarding wave, before the power mechanic is taught)
 }
