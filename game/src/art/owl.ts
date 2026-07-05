@@ -15,6 +15,7 @@ export interface DrawOwlOpts {
   w: number;
   h: number;
   garment: number; // destination-building color: owl cap+stole / owlet backpack
+  wingsUp?: boolean; // raised wings — the "up" pose of the standing flap cycle
 }
 
 // Palette — reuses the warm browns already used elsewhere in the game.
@@ -38,6 +39,7 @@ function shade(color: number, f: number): number {
 
 export function drawOwl(g: Phaser.GameObjects.Graphics, opts: DrawOwlOpts): void {
   const { kind, view, frame, garment } = opts;
+  const wingsUp = opts.wingsUp ?? false;
   const { body, belly } = PALETTE[kind];
   const garmentDk = shade(garment, 0.6); // shadow/back-layer of the garment
   const cx = opts.w / 2;
@@ -90,11 +92,14 @@ export function drawOwl(g: Phaser.GameObjects.Graphics, opts: DrawOwlOpts): void
   }
 
   // ---- owlet side backpack bulge (behind the body) ----
+  // Pushed well behind the back (−x) so it clearly protrudes past the body
+  // silhouette in profile; straps + flap are added on top in drawPack().
   if (kind === "student" && view === "side") {
+    const packCx = cx - bodyW * 0.5;
     g.fillStyle(garmentDk, 1);
-    g.fillEllipse(cx - bodyW * 0.34, bodyCy, bodyW * 0.46, bodyH * 0.86);
+    g.fillEllipse(packCx, bodyCy, bodyW * 0.62, bodyH * 0.98);
     g.fillStyle(garment, 1);
-    g.fillEllipse(cx - bodyW * 0.34, bodyCy, bodyW * 0.36, bodyH * 0.68);
+    g.fillEllipse(packCx, bodyCy, bodyW * 0.5, bodyH * 0.8);
   }
 
   // ---- body + belly ----
@@ -107,6 +112,10 @@ export function drawOwl(g: Phaser.GameObjects.Graphics, opts: DrawOwlOpts): void
     g.fillStyle(belly, 1);
     g.fillEllipse(cx + bodyW * 0.16, bodyCy + bodyH * 0.14, bodyW * 0.4, bodyH * 0.56);
   }
+
+  // ---- wings on the body sides; the "up" pose (flap cycle) raises + spreads them.
+  // Drawn over the body but before regalia so straps/stole sit on top of the roots. ----
+  drawWings(g, view, wingsUp, cx, bodyW, bodyH, bodyCy, body);
 
   // ---- body-level regalia / backpack (drawn before the head so the head + eyes
   // always sit on top and are never covered) ----
@@ -147,6 +156,35 @@ export function drawOwl(g: Phaser.GameObjects.Graphics, opts: DrawOwlOpts): void
 
   // ---- ear tufts drawn last so they rise ABOVE the cap; a single tuft in profile ----
   drawEars(g, kind, view, body, cx, headCy, rH);
+}
+
+// Two body wings (one in profile). "up" raises + spreads them for the flap cycle;
+// baked as a second standing frame and animated while the owl waits.
+function drawWings(
+  g: Phaser.GameObjects.Graphics,
+  view: OwlView,
+  up: boolean,
+  cx: number,
+  bodyW: number,
+  bodyH: number,
+  bodyCy: number,
+  body: number
+) {
+  g.fillStyle(shade(body, 0.78), 1); // a touch darker than the body so the wing reads
+  if (view === "side") {
+    // profile: a single near wing over the body
+    const wx = cx + bodyW * 0.02;
+    const wy = bodyCy + (up ? -bodyH * 0.16 : bodyH * 0.06);
+    g.fillEllipse(wx, wy, bodyW * (up ? 0.3 : 0.34), bodyH * (up ? 0.82 : 0.64));
+  } else {
+    // front/back: symmetric wings at the body edges
+    const off = bodyW * (up ? 0.5 : 0.42);
+    const wy = bodyCy + (up ? -bodyH * 0.18 : bodyH * 0.06);
+    const ww = bodyW * (up ? 0.26 : 0.3);
+    const wh = bodyH * (up ? 0.82 : 0.64);
+    g.fillEllipse(cx - off, wy, ww, wh);
+    g.fillEllipse(cx + off, wy, ww, wh);
+  }
 }
 
 function drawEars(
@@ -275,6 +313,13 @@ function drawPack(
     g.fillStyle(pack, 1);
     g.fillRoundedRect(cx - bodyW * 0.52, bodyCy - bodyH * 0.2, 5, bodyH * 0.5, 2);
     g.fillRoundedRect(cx + bodyW * 0.52 - 5, bodyCy - bodyH * 0.2, 5, bodyH * 0.5, 2);
+  } else {
+    // side: the pack body bulges behind the owlet (drawn in drawOwl). Add a
+    // shoulder strap across the near side so it reads as a worn backpack
+    // rather than a vague bulge.
+    const top = bodyCy - bodyH * 0.42;
+    const bot = bodyBottom - 3;
+    band(cx + bodyW * 0.14, top, cx - bodyW * 0.06, bot, 5, packDk);
+    band(cx + bodyW * 0.14, top, cx - bodyW * 0.06, bot, 3, pack);
   }
-  // side: the pack bulge is drawn behind the body in drawOwl — nothing to add here
 }
